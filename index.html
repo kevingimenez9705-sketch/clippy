@@ -59,13 +59,6 @@
     color:#fff;
   }
 
-  .hero.con-foto::before{
-    content:'';
-    position:absolute;
-    inset:0;
-    background:linear-gradient(105deg,rgba(15,27,62,.94) 0%,rgba(22,41,92,.78) 55%,rgba(29,53,112,.55) 100%);
-  }
-
   .hero > *{position:relative;z-index:1;}
 
   .hero .rotulo{
@@ -83,10 +76,23 @@
 
   .ficha{
     background:var(--marino-int);
+    background-size:cover;
+    background-position:center;
     border-radius:10px;
     padding:15px 20px;
     min-width:236px;
+    position:relative;
+    overflow:hidden;
   }
+
+  .ficha.con-foto::before{
+    content:'';
+    position:absolute;
+    inset:0;
+    background:linear-gradient(160deg,rgba(15,27,62,.93) 0%,rgba(22,41,92,.74) 55%,rgba(29,53,112,.5) 100%);
+  }
+
+  .ficha > *{position:relative;z-index:1;}
 
   .ficha .rotulo{margin-bottom:3px;}
   .ficha .destacado{font-size:19px;font-weight:600;margin:0;}
@@ -163,28 +169,50 @@
     padding:17px 19px 19px;
     box-shadow:var(--sombra);
     text-align:center;
+    overflow:hidden;
   }
 
   .foto{
-    width:74px;
-    height:74px;
-    margin:0 auto 11px;
-    border-radius:50%;
-    overflow:hidden;
+    width:calc(100% + 38px);
+    height:104px;
+    margin:-17px -19px 14px;
     background:#eceff4;
-    border:3px solid var(--blanco);
-    box-shadow:0 0 0 2px currentColor;
+    position:relative;
+    display:flex;
+    align-items:flex-end;
+    justify-content:flex-end;
+  }
+
+  .foto img{width:100%;height:100%;object-fit:cover;display:block;position:absolute;inset:0;}
+
+  .foto::after{
+    content:'';
+    position:absolute;
+    inset:0;
+    background:linear-gradient(180deg,rgba(15,27,62,0) 45%,rgba(15,27,62,.5) 100%);
+  }
+
+  .foto .emoji{
+    display:none;
+    position:relative;
+    z-index:1;
+    font-size:22px;
+    margin:0 11px 9px 0;
+    text-shadow:0 1px 4px rgba(0,0,0,.45);
+  }
+
+  .foto.sin-foto{background:linear-gradient(135deg,currentColor 0%,#dfe4ee 150%);}
+  .foto.sin-foto::after{display:none;}
+  .foto.sin-foto img{display:none;}
+  .foto.sin-foto .emoji{
     display:flex;
     align-items:center;
     justify-content:center;
+    position:absolute;
+    inset:0;
+    margin:0;
+    font-size:34px;
   }
-
-  .foto img{width:100%;height:100%;object-fit:cover;display:block;}
-
-  .foto .emoji{display:none;font-size:31px;line-height:1;}
-
-  .foto.sin-foto img{display:none;}
-  .foto.sin-foto .emoji{display:block;}
 
   .turno .hora{
     font-size:29px;
@@ -327,8 +355,8 @@ const DATOS_DEMO = [
 
 const ESCALA = [
   { hasta:0.40,     clase:'t-frio',  emoji:'🦗', texto:'paspando moscas', color:'var(--frio)',  foto:'img/Paspando moscas.jpg' },
-  { hasta:0.75,     clase:'t-tibio', emoji:'🐢', texto:'apenas movido',   color:'var(--tibio)', foto:'img/Apenas movido.jpg' },
-  { hasta:1.15,     clase:'t-vivo',  emoji:'🔥', texto:'sala viva',       color:'var(--vivo)',  foto:'img/Sala viva.jpg' },
+  { hasta:0.55,     clase:'t-tibio', emoji:'🐢', texto:'apenas movido',   color:'var(--tibio)', foto:'img/Apenas movido.jpg' },
+  { hasta:0.70,     clase:'t-vivo',  emoji:'🔥', texto:'sala viva',       color:'var(--vivo)',  foto:'img/Sala viva.jpg' },
   { hasta:Infinity, clase:'t-lleno', emoji:'🚨', texto:'explotado',       color:'var(--lleno)', foto:'img/Explotado.jpg' }
 ];
 
@@ -538,9 +566,9 @@ async function recargar(){
 }
 
 if (BANNER){
-  const hero = document.querySelector('.hero');
-  hero.style.backgroundImage = `url('${BANNER}')`;
-  hero.classList.add('con-foto');
+  const ficha = document.querySelector('.ficha');
+  ficha.style.backgroundImage = `url('${BANNER}')`;
+  ficha.classList.add('con-foto');
 }
 
 recargar();
