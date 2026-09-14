@@ -174,16 +174,16 @@
 
   .foto{
     width:calc(100% + 38px);
-    height:104px;
+    aspect-ratio:1/1;
     margin:-17px -19px 14px;
-    background:linear-gradient(160deg,var(--panel) 0%,#e6eaf2 100%);
+    background:#eceff4;
     position:relative;
     display:flex;
     align-items:flex-end;
     justify-content:flex-end;
   }
 
-  .foto img{width:100%;height:100%;object-fit:contain;object-position:center 85%;padding:6px 10px 0;display:block;position:absolute;inset:0;}
+  .foto img{width:100%;height:100%;object-fit:cover;display:block;position:absolute;inset:0;}
 
   .foto .emoji{
     display:none;
