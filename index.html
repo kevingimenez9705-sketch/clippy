@@ -397,8 +397,9 @@ function normalizar(filas){
     const cupo = Number(f.cupo) || CUPO_DEFAULT;
     const confirmados = Number(f.confirmados) || 0;
     const ratio = cupo > 0 ? confirmados/cupo : 0;
-    // Si el origen ya mandó la etiqueta, se respeta: una sola fuente de verdad.
-    const tramo = ESCALA.find(t => t.texto === f.etiqueta) || tramoDe(ratio);
+    // El tramo se calcula siempre acá según ESCALA (fuente única de verdad):
+    // así una etiqueta vieja que mande el origen no pisa el umbral actual.
+    const tramo = tramoDe(ratio);
     return { fecha, cupo, confirmados, ratio, sede:f.sede || 'DEFAULT', tramo };
   })
   .filter(t => !isNaN(t.fecha))
