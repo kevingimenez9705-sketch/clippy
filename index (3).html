@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="es-AR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Estado de Sala · Selección Operativa</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,400;0,500;0,600;0,700;1,500;1,600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --marino:#16295c;
+    --marino-2:#1d3570;
+    --marino-int:#22407f;
+    --azul:#3f8ae0;
+    --tinta:#1f2937;
+    --gris:#6b7280;
+    --linea:#e3e7ee;
+    --panel:#f1f3f8;
+    --blanco:#ffffff;
+
+    --frio:#2f80ed;
+    --tibio:#e39a1c;
+    --vivo:#2e9b57;
+    --lleno:#dd3b27;
+
+    --r:12px;
+    --sombra:0 1px 3px rgba(22,41,92,.08);
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+
+  body{
+    background:var(--blanco);
+    color:var(--tinta);
+    font-family:"Poppins",system-ui,sans-serif;
+    font-size:15px;
+    line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .marco{max-width:1120px;margin:0 auto;padding:18px 16px 56px;}
+
+  /* ── hero ─────────────────────────────────── */
+  .hero{
+    background:linear-gradient(120deg,var(--marino) 0%,var(--marino-2) 100%);
+    background-size:cover;
+    background-position:center;
+    position:relative;
+    overflow:hidden;
+    border-radius:var(--r);
+    padding:26px 30px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:22px;
+    flex-wrap:wrap;
+    color:#fff;
+  }
+
+  .hero.con-foto::before{
+    content:'';
+    position:absolute;
+    inset:0;
+    background:linear-gradient(105deg,rgba(15,27,62,.94) 0%,rgba(22,41,92,.78) 55%,rgba(29,53,112,.55) 100%);
+  }
+
+  .hero > *{position:relative;z-index:1;}
+
+  .hero .rotulo{
+    font-size:11.5px;
+    font-weight:600;
+    letter-spacing:.09em;
+    color:#9fb6e0;
+    margin:0 0 4px;
+  }
+
+  .hero h1{font-size:30px;font-weight:700;margin:0;line-height:1.15;}
+  .hero h1 span{color:var(--azul);}
+
+  .hero p.bajada{margin:5px 0 0;font-size:14px;color:#c3d1e8;font-weight:400;}
+
+  .ficha{
+    background:var(--marino-int);
+    border-radius:10px;
+    padding:15px 20px;
+    min-width:236px;
+  }
+
+  .ficha .rotulo{margin-bottom:3px;}
+  .ficha .destacado{font-size:19px;font-weight:600;margin:0;}
+  .ficha .nota{margin:2px 0 0;font-size:13px;color:#b7c8e4;}
+
+  .ficha .reloj{
+    margin:9px 0 0;
+    font-size:12.5px;
+    font-weight:600;
+    color:#9fb6e0;
+    font-variant-numeric:tabular-nums;
+  }
+
+  /* ── resumen ──────────────────────────────── */
+  .resumen{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(215px,1fr));
+    gap:14px;
+    margin:18px 0 0;
+  }
+
+  .tarjeta-dato{
+    background:var(--panel);
+    border:1px solid var(--linea);
+    border-radius:10px;
+    padding:14px 17px;
+    display:flex;
+    align-items:center;
+    gap:13px;
+  }
+
+  .tarjeta-dato .cifra{
+    font-size:27px;
+    font-weight:700;
+    line-height:1;
+    font-variant-numeric:tabular-nums;
+  }
+
+  .tarjeta-dato .titulo{font-weight:600;font-size:14.5px;margin:0;}
+  .tarjeta-dato .sub{margin:0;font-size:12.5px;color:var(--gris);}
+
+  .tarjeta-dato.alerta{background:#fdf0ee;border-color:#f6d2cb;}
+  .tarjeta-dato.alerta .cifra{color:var(--lleno);}
+  .tarjeta-dato.margen{background:#eef4fd;border-color:#cfe0f7;}
+  .tarjeta-dato.margen .cifra{color:var(--frio);}
+
+  /* ── turnos ───────────────────────────────── */
+  .titulo-seccion{
+    font-size:16px;
+    font-weight:600;
+    margin:30px 0 13px;
+    padding-bottom:9px;
+    border-bottom:1px solid var(--linea);
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    gap:12px;
+    flex-wrap:wrap;
+  }
+
+  .titulo-seccion .cuando{font-size:13px;font-weight:500;color:var(--gris);}
+
+  .grilla{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(248px,1fr));
+    gap:16px;
+  }
+
+  .turno{
+    background:var(--blanco);
+    border:1px solid var(--linea);
+    border-top:4px solid var(--gris);
+    border-radius:10px;
+    padding:17px 19px 19px;
+    box-shadow:var(--sombra);
+    text-align:center;
+  }
+
+  .foto{
+    width:74px;
+    height:74px;
+    margin:0 auto 11px;
+    border-radius:50%;
+    overflow:hidden;
+    background:#eceff4;
+    border:3px solid var(--blanco);
+    box-shadow:0 0 0 2px currentColor;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+
+  .foto img{width:100%;height:100%;object-fit:cover;display:block;}
+
+  .foto .emoji{display:none;font-size:31px;line-height:1;}
+
+  .foto.sin-foto img{display:none;}
+  .foto.sin-foto .emoji{display:block;}
+
+  .turno .hora{
+    font-size:29px;
+    font-weight:700;
+    margin:0;
+    line-height:1.1;
+    font-variant-numeric:tabular-nums;
+  }
+
+  .turno .fecha{margin:1px 0 12px;font-size:12.5px;color:var(--gris);font-weight:500;}
+  .turno .personas{font-size:15px;margin:0 0 3px;font-weight:500;}
+  .turno .personas b{font-size:22px;font-weight:700;}
+  .turno .apodo{font-style:italic;font-weight:600;font-size:14px;margin:0 0 13px;}
+
+  .medidor{height:7px;background:#eceff4;border-radius:99px;overflow:hidden;}
+
+  .medidor span{
+    display:block;height:100%;width:0;border-radius:99px;
+    transition:width .65s cubic-bezier(.22,.61,.36,1);
+  }
+
+  .turno .ocupacion{
+    margin:8px 0 0;
+    font-size:12.5px;
+    color:var(--gris);
+    font-variant-numeric:tabular-nums;
+  }
+
+  .turno.pasado{opacity:.5;}
+
+  .t-frio{border-top-color:var(--frio);}
+  .t-frio .hora,.t-frio .apodo{color:var(--frio);}
+  .t-frio .foto{color:var(--frio);}
+  .t-frio .medidor span{background:var(--frio);}
+
+  .t-tibio{border-top-color:var(--tibio);}
+  .t-tibio .hora,.t-tibio .apodo{color:var(--tibio);}
+  .t-tibio .foto{color:var(--tibio);}
+  .t-tibio .medidor span{background:var(--tibio);}
+
+  .t-vivo{border-top-color:var(--vivo);}
+  .t-vivo .hora,.t-vivo .apodo{color:var(--vivo);}
+  .t-vivo .foto{color:var(--vivo);}
+  .t-vivo .medidor span{background:var(--vivo);}
+
+  .t-lleno{border-top-color:var(--lleno);}
+  .t-lleno .hora,.t-lleno .apodo{color:var(--lleno);}
+  .t-lleno .foto{color:var(--lleno);}
+  .t-lleno .medidor span{background:var(--lleno);}
+
+  /* ── pie ──────────────────────────────────── */
+  .referencia{
+    display:flex;
+    flex-wrap:wrap;
+    gap:9px 22px;
+    margin:30px 0 0;
+    padding-top:17px;
+    border-top:1px solid var(--linea);
+    font-size:13px;
+    color:var(--gris);
+  }
+
+  .referencia span{display:flex;align-items:center;gap:7px;}
+
+  .punto{width:9px;height:9px;border-radius:50%;display:inline-block;}
+
+  .pie{margin:13px 0 0;font-size:12.5px;color:var(--gris);}
+
+  .vacio{
+    margin:22px 0;
+    padding:30px;
+    background:var(--panel);
+    border:1px solid var(--linea);
+    border-radius:10px;
+    text-align:center;
+    color:var(--gris);
+  }
+
+  .vacio b{display:block;color:var(--tinta);font-size:16px;margin-bottom:5px;}
+
+  :focus-visible{outline:2px solid var(--azul);outline-offset:3px;}
+
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;}}
+
+  @media (max-width:640px){
+    .hero{padding:22px;}
+    .hero h1{font-size:25px;}
+    .ficha{width:100%;}
+  }
+</style>
+</head>
+<body>
+<main class="marco">
+
+  <section class="hero">
+    <div>
+      <p class="rotulo">EQUIPO DE SELECCIÓN Y RRHH</p>
+      <h1>Estado de <span>Sala</span></h1>
+      <p class="bajada">Confirmaciones por turno, en vivo.</p>
+    </div>
+    <div class="ficha">
+      <p class="rotulo">PRÓXIMO TURNO</p>
+      <p class="destacado" id="ficha-titulo">—</p>
+      <p class="nota" id="ficha-nota">Cargando confirmaciones…</p>
+      <p class="reloj" id="reloj">--:--:--</p>
+    </div>
+  </section>
+
+  <div class="resumen" id="resumen"></div>
+  <div id="contenido"></div>
+
+  <div class="referencia" id="referencia"></div>
+  <p class="pie">Se actualiza sola cada minuto. Los mismos datos que Clippy manda al grupo. <span id="sello"></span></p>
+
+</main>
+
+<script>
+/* ════════════════════════════════════════
+   CONFIG
+   ════════════════════════════════════════ */
+const CUPO_DEFAULT = 40;                  // mismo valor que el Code node de n8n
+const VENTANA_HS   = 72;
+// URL /exec de la Web App de Apps Script (ver apps-script.gs).
+// Dejalo en '' para trabajar con DATOS_DEMO.
+const FUENTE       = '';
+const REFRESCO_MS  = 60000;
+
+/* Imágenes. Dejá '' en cualquiera y cae al emoji / al degradé liso. */
+const BANNER = '';   // ej: 'img/banner.jpg'
+
+const DATOS_DEMO = [
+  { fecha:'2026-09-15T09:00:00', sede:'DEFAULT', confirmados:21, cupo:40 },
+  { fecha:'2026-09-15T11:00:00', sede:'DEFAULT', confirmados:18, cupo:40 },
+  { fecha:'2026-09-15T14:00:00', sede:'DEFAULT', confirmados:28, cupo:40 },
+  { fecha:'2026-09-15T16:00:00', sede:'DEFAULT', confirmados:28, cupo:40 },
+  { fecha:'2026-09-16T09:00:00', sede:'DEFAULT', confirmados:71, cupo:40 },
+  { fecha:'2026-09-16T11:00:00', sede:'DEFAULT', confirmados:65, cupo:40 },
+  { fecha:'2026-09-24T11:00:00', sede:'DEFAULT', confirmados:1,  cupo:40 }
+];
+
+const ESCALA = [
+  { hasta:0.40,     clase:'t-frio',  emoji:'🦗', texto:'paspando moscas', color:'var(--frio)',  foto:'' },
+  { hasta:0.75,     clase:'t-tibio', emoji:'🐢', texto:'apenas movido',   color:'var(--tibio)', foto:'' },
+  { hasta:1.15,     clase:'t-vivo',  emoji:'🔥', texto:'sala viva',       color:'var(--vivo)',  foto:'' },
+  { hasta:Infinity, clase:'t-lleno', emoji:'🚨', texto:'explotado',       color:'var(--lleno)', foto:'' }
+];
+
+/* ════════════════════════════════════════
+   HELPERS
+   ════════════════════════════════════════ */
+const $ = (id) => document.getElementById(id);
+const pad = (n) => String(n).padStart(2,'0');
+const MS_HORA = 3600000;
+
+const DIAS  = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+
+const tramoDe = (r) => ESCALA.find(t => r < t.hasta) || ESCALA[ESCALA.length-1];
+
+function rotularDia(fecha, hoy){
+  const a = new Date(hoy.getFullYear(),hoy.getMonth(),hoy.getDate());
+  const b = new Date(fecha.getFullYear(),fecha.getMonth(),fecha.getDate());
+  const dif = Math.round((b-a)/86400000);
+  if (dif === 0) return 'Hoy';
+  if (dif === 1) return 'Mañana';
+  return `${DIAS[fecha.getDay()]} ${fecha.getDate()} de ${MESES[fecha.getMonth()]}`;
+}
+
+function faltaTexto(ms){
+  if (ms <= 0) return 'En curso';
+  const h = Math.floor(ms/MS_HORA);
+  const m = Math.floor((ms % MS_HORA)/60000);
+  const s = Math.floor((ms % 60000)/1000);
+  if (h >= 24){ const d = Math.floor(h/24); return `Empieza en ${d} ${d===1?'día':'días'} y ${h%24}h`; }
+  if (h >= 1)  return `Empieza en ${h}h ${pad(m)}m`;
+  return `Empieza en ${pad(m)}m ${pad(s)}s`;
+}
+
+const escapar = (s) => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ════════════════════════════════════════
+   DATOS
+   ════════════════════════════════════════ */
+let TURNOS = [];
+let proximoTurno = null;
+
+function normalizar(filas){
+  return filas.map(f => {
+    const fecha = new Date(f.fecha);
+    const cupo = Number(f.cupo) || CUPO_DEFAULT;
+    const confirmados = Number(f.confirmados) || 0;
+    const ratio = cupo > 0 ? confirmados/cupo : 0;
+    // Si el origen ya mandó la etiqueta, se respeta: una sola fuente de verdad.
+    const tramo = ESCALA.find(t => t.texto === f.etiqueta) || tramoDe(ratio);
+    return { fecha, cupo, confirmados, ratio, sede:f.sede || 'DEFAULT', tramo };
+  })
+  .filter(t => !isNaN(t.fecha))
+  .sort((a,b) => a.fecha - b.fecha);
+}
+
+async function traer(){
+  if (!FUENTE) return DATOS_DEMO;
+
+  try{
+    const r = await fetch(`${FUENTE}?t=${Date.now()}`, {cache:'no-store'});
+    if (!r.ok) throw new Error(r.status);
+    const j = await r.json();
+    return Array.isArray(j) ? j : (j.detalle || DATOS_DEMO);
+  }catch(e){
+    // Apps Script a veces rebota el fetch por CORS: reintenta por JSONP
+    try{
+      const j = await traerJsonp();
+      return Array.isArray(j) ? j : (j.detalle || DATOS_DEMO);
+    }catch(e2){
+      return DATOS_DEMO;
+    }
+  }
+}
+
+function traerJsonp(){
+  return new Promise((resolve, reject) => {
+    const nombre = `clippy_${Date.now()}`;
+    const tag = document.createElement('script');
+    const limpiar = () => { delete window[nombre]; tag.remove(); };
+
+    window[nombre] = (datos) => { limpiar(); resolve(datos); };
+    tag.onerror = () => { limpiar(); reject(new Error('jsonp')); };
+    tag.src = `${FUENTE}?callback=${nombre}&t=${Date.now()}`;
+    document.body.appendChild(tag);
+
+    setTimeout(() => { if (window[nombre]){ limpiar(); reject(new Error('timeout')); } }, 8000);
+  });
+}
+
+/* ════════════════════════════════════════
+   RENDER
+   ════════════════════════════════════════ */
+function pintar(){
+  const ahora = new Date();
+  const vigentes = TURNOS.filter(t => t.fecha >= new Date(ahora - MS_HORA));
+  const enVentana = vigentes.filter(t => (t.fecha-ahora)/MS_HORA <= VENTANA_HS);
+  proximoTurno = vigentes[0] || null;
+
+  pintarFicha(ahora);
+  pintarReferencia();
+  $('sello').textContent = `Última lectura ${pad(ahora.getHours())}:${pad(ahora.getMinutes())}.`;
+
+  if (!vigentes.length){
+    $('resumen').innerHTML = '';
+    $('contenido').innerHTML = `<div class="vacio"><b>Todavía no hay turnos cargados</b>
+      Cuando se confirmen postulantes para una fecha futura van a aparecer acá.</div>`;
+    return;
+  }
+
+  const totalVentana = enVentana.reduce((a,t)=>a+t.confirmados,0);
+  const llenos = vigentes.filter(t => t.tramo.clase === 't-lleno');
+  const frios  = vigentes.filter(t => t.tramo.clase === 't-frio' && (t.fecha-ahora)/MS_HORA <= 48);
+
+  const datos = [
+    { cifra:totalVentana, titulo:'Confirmados', sub:`En las próximas ${VENTANA_HS}hs`, clase:'' },
+    { cifra:enVentana.length, titulo:'Turnos activos', sub:'Con gente citada', clase:'' }
+  ];
+  if (llenos.length) datos.push({ cifra:llenos.length, titulo:'Turnos explotados', sub:'Sumar selector o frenar citaciones', clase:'alerta' });
+  if (frios.length)  datos.push({ cifra:frios.length, titulo:'Salas vacías', sub:'Hay margen para citar más', clase:'margen' });
+
+  $('resumen').innerHTML = datos.map(d => `
+    <div class="tarjeta-dato ${d.clase}">
+      <div class="cifra">${d.cifra}</div>
+      <div><p class="titulo">${d.titulo}</p><p class="sub">${escapar(d.sub)}</p></div>
+    </div>`).join('');
+
+  const lista = enVentana.length ? enVentana : vigentes.slice(0,8);
+  const porDia = new Map();
+  for (const t of lista){
+    const rot = rotularDia(t.fecha, ahora);
+    if (!porDia.has(rot)) porDia.set(rot, []);
+    porDia.get(rot).push(t);
+  }
+
+  let html = '';
+  for (const [dia, turnos] of porDia){
+    const total = turnos.reduce((a,t)=>a+t.confirmados,0);
+    html += `<h2 class="titulo-seccion">${escapar(dia)}
+      <span class="cuando">${total} confirmados en ${turnos.length} ${turnos.length===1?'turno':'turnos'}</span></h2>`;
+    html += '<div class="grilla">';
+    for (const t of turnos){
+      const sede = t.sede === 'DEFAULT' ? '' : ` · ${escapar(t.sede)}`;
+      html += `<article class="turno ${t.tramo.clase}${t.fecha < ahora ? ' pasado' : ''}">
+        ${avatar(t.tramo)}
+        <p class="hora">${pad(t.fecha.getHours())}:${pad(t.fecha.getMinutes())}</p>
+        <p class="fecha">${pad(t.fecha.getDate())}/${pad(t.fecha.getMonth()+1)}${sede}</p>
+        <p class="personas"><b>${t.confirmados}</b> confirmados</p>
+        <p class="apodo">${t.tramo.emoji} ${escapar(t.tramo.texto)}</p>
+        <div class="medidor"><span data-ancho="${Math.min(100, Math.round(t.ratio*100))}"></span></div>
+        <p class="ocupacion">${Math.round(t.ratio*100)}% de la sala</p>
+      </article>`;
+    }
+    html += '</div>';
+  }
+
+  const lejanos = vigentes.filter(t => (t.fecha-ahora)/MS_HORA > VENTANA_HS);
+  if (lejanos.length){
+    const tot = lejanos.reduce((a,t)=>a+t.confirmados,0);
+    html += `<p class="pie">Más adelante: ${tot} confirmados en ${lejanos.length} ${lejanos.length===1?'turno':'turnos'}.</p>`;
+  }
+
+  $('contenido').innerHTML = html;
+
+  requestAnimationFrame(() => {
+    document.querySelectorAll('.medidor span').forEach(el => { el.style.width = el.dataset.ancho + '%'; });
+  });
+}
+
+function avatar(tramo){
+  if (!tramo.foto){
+    return `<div class="foto sin-foto"><span class="emoji">${tramo.emoji}</span></div>`;
+  }
+  return `<div class="foto"><img src="${escapar(tramo.foto)}" alt="${escapar(tramo.texto)}"
+    onerror="this.closest('.foto').classList.add('sin-foto')"><span class="emoji">${tramo.emoji}</span></div>`;
+}
+
+function pintarFicha(ahora){
+  if (!proximoTurno){
+    $('ficha-titulo').textContent = 'Sin turnos';
+    $('ficha-nota').textContent = 'No hay confirmaciones a futuro.';
+    return;
+  }
+  const p = proximoTurno;
+  $('ficha-titulo').textContent = `${rotularDia(p.fecha, ahora)} ${pad(p.fecha.getHours())}:${pad(p.fecha.getMinutes())}`;
+  $('ficha-nota').textContent = `${p.confirmados} confirmados · ${p.tramo.emoji} ${p.tramo.texto}`;
+}
+
+function pintarReferencia(){
+  $('referencia').innerHTML = ESCALA.map(e =>
+    `<span><i class="punto" style="background:${e.color}"></i>${e.emoji} ${e.texto}</span>`).join('');
+}
+
+/* ════════════════════════════════════════
+   LATIDO
+   ════════════════════════════════════════ */
+function tic(){
+  const ahora = new Date();
+  $('reloj').textContent = proximoTurno
+    ? faltaTexto(proximoTurno.fecha - ahora).toUpperCase()
+    : `${pad(ahora.getHours())}:${pad(ahora.getMinutes())}:${pad(ahora.getSeconds())}`;
+}
+
+async function recargar(){
+  TURNOS = normalizar(await traer());
+  pintar();
+}
+
+if (BANNER){
+  const hero = document.querySelector('.hero');
+  hero.style.backgroundImage = `url('${BANNER}')`;
+  hero.classList.add('con-foto');
+}
+
+recargar();
+setInterval(tic, 1000);
+setInterval(recargar, REFRESCO_MS);
+</script>
+</body>
+</html>
