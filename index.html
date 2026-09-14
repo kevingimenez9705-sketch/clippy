@@ -7,68 +7,51 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,400;0,500;0,600;0,700;1,500;1,600&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
-<meta name="theme-color" content="#070912">
+<meta name="theme-color" content="#ffffff">
 <style>
   :root{
-    --fondo:#070912;
-    --fondo-2:#0c1020;
-    --marino-int:#171c36;
-    --azul:#7c6bff;
+    --marino:#16295c;
+    --marino-2:#1d3570;
+    --marino-int:#22407f;
+    --azul:#3f8ae0;
     --cian:#22d3ee;
-    --tinta:#eef1fb;
-    --gris:#8992ad;
-    --linea:rgba(255,255,255,.10);
-    --panel:rgba(255,255,255,.045);
-    --vidrio:rgba(255,255,255,.09);
+    --tinta:#1f2937;
+    --gris:#6b7280;
+    --linea:#e3e7ee;
+    --panel:#f1f3f8;
     --blanco:#ffffff;
 
-    --frio:#38bdf8;
-    --tibio:#fbbf24;
-    --vivo:#34d399;
-    --lleno:#fb5b5b;
+    --frio:#2f80ed;
+    --tibio:#e39a1c;
+    --vivo:#2e9b57;
+    --lleno:#dd3b27;
 
-    --r:14px;
-    --sombra:0 20px 45px -22px rgba(0,0,0,.65),inset 0 1px 0 rgba(255,255,255,.05);
+    --r:12px;
+    --sombra:0 1px 3px rgba(22,41,92,.08);
   }
 
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;}
 
   body{
-    background:
-      radial-gradient(900px 520px at 10% -10%,rgba(124,107,255,.28),transparent 60%),
-      radial-gradient(760px 520px at 108% 6%,rgba(34,211,238,.18),transparent 55%),
-      radial-gradient(620px 420px at 46% 118%,rgba(255,95,174,.12),transparent 60%),
-      var(--fondo);
-    background-attachment:fixed;
+    background:var(--blanco);
     color:var(--tinta);
     font-family:"Poppins",system-ui,sans-serif;
     font-size:15px;
     line-height:1.55;
     -webkit-font-smoothing:antialiased;
-    position:relative;
   }
 
-  body::before{
-    content:'';
-    position:fixed;
-    inset:0;
-    background-image:radial-gradient(rgba(255,255,255,.07) 1px,transparent 1px);
-    background-size:28px 28px;
-    -webkit-mask-image:radial-gradient(circle at 50% 0%,#000,transparent 75%);
-    mask-image:radial-gradient(circle at 50% 0%,#000,transparent 75%);
-    pointer-events:none;
-    z-index:0;
-  }
-
-  .marco{max-width:1120px;margin:0 auto;padding:18px 16px 56px;position:relative;z-index:1;}
+  .marco{max-width:1120px;margin:0 auto;padding:18px 16px 56px;}
 
   /* ── hero ─────────────────────────────────── */
   .hero{
-    background:linear-gradient(135deg,rgba(124,107,255,.16) 0%,rgba(34,211,238,.08) 100%),var(--fondo-2);
-    border:1px solid var(--vidrio);
-    box-shadow:var(--sombra);
-    backdrop-filter:blur(18px);
+    background:
+      radial-gradient(480px 300px at 12% -15%,rgba(255,255,255,.14),transparent 60%),
+      radial-gradient(420px 280px at 108% 25%,rgba(34,211,238,.22),transparent 55%),
+      linear-gradient(120deg,var(--marino) 0%,var(--marino-2) 100%);
+    background-size:cover;
+    background-position:center;
     position:relative;
     overflow:hidden;
     border-radius:var(--r);
@@ -79,51 +62,39 @@
     gap:22px;
     flex-wrap:wrap;
     color:#fff;
-  }
-
-  .hero::before{
-    content:'';
-    position:absolute;
-    inset:-60%;
-    background:conic-gradient(from 0deg,transparent 0deg,rgba(124,107,255,.35) 70deg,transparent 150deg,rgba(34,211,238,.28) 230deg,transparent 320deg);
-    animation:girar 16s linear infinite;
-    opacity:.55;
-    z-index:0;
+    box-shadow:0 18px 38px -22px rgba(22,41,92,.5);
   }
 
   .hero > *{position:relative;z-index:1;}
 
-  @keyframes girar{to{transform:rotate(1turn);}}
-
   .hero .rotulo{
     font-size:11.5px;
     font-weight:700;
-    letter-spacing:.14em;
-    color:#b9c0ff;
+    letter-spacing:.12em;
+    color:#9fb6e0;
     margin:0 0 4px;
   }
 
-  .hero h1{font-family:"Space Grotesk",system-ui,sans-serif;font-size:32px;font-weight:700;margin:0;line-height:1.15;letter-spacing:-.01em;}
+  .hero h1{font-family:"Space Grotesk",system-ui,sans-serif;font-size:31px;font-weight:700;margin:0;line-height:1.15;letter-spacing:-.01em;}
   .hero h1 span{
-    background:linear-gradient(90deg,var(--cian),var(--azul));
+    background:linear-gradient(90deg,var(--cian),#8fb8ff);
     -webkit-background-clip:text;
     background-clip:text;
     color:transparent;
   }
 
-  .hero p.bajada{margin:6px 0 0;font-size:14px;color:#b6bdda;font-weight:400;}
+  .hero p.bajada{margin:6px 0 0;font-size:14px;color:#c3d1e8;font-weight:400;}
 
   .ficha{
     background:var(--marino-int);
     background-size:cover;
     background-position:center;
-    border:1px solid var(--vidrio);
-    border-radius:12px;
+    border-radius:10px;
     padding:15px 20px;
     min-width:236px;
     position:relative;
     overflow:hidden;
-    box-shadow:0 14px 34px -18px rgba(124,107,255,.55);
+    box-shadow:0 12px 28px -18px rgba(34,64,127,.55);
   }
 
   .ficha.con-foto::before{
@@ -172,15 +143,14 @@
 
   .tarjeta-dato{
     background:var(--panel);
-    border:1px solid var(--vidrio);
-    border-radius:12px;
+    border:1px solid var(--linea);
+    border-radius:10px;
     padding:14px 17px 14px 20px;
     display:flex;
     align-items:center;
     gap:13px;
     position:relative;
     overflow:hidden;
-    backdrop-filter:blur(14px);
     transition:transform .25s ease,box-shadow .25s ease;
     animation:aparecer .5s ease both;
   }
@@ -192,7 +162,7 @@
     background:linear-gradient(var(--azul),var(--cian));
   }
 
-  .tarjeta-dato:hover{transform:translateY(-3px);box-shadow:0 16px 34px -18px rgba(124,107,255,.45);}
+  .tarjeta-dato:hover{transform:translateY(-3px);box-shadow:0 14px 26px -16px rgba(22,41,92,.22);}
 
   .tarjeta-dato .cifra{
     font-family:"Space Grotesk",system-ui,sans-serif;
@@ -205,10 +175,10 @@
   .tarjeta-dato .titulo{font-weight:600;font-size:14.5px;margin:0;}
   .tarjeta-dato .sub{margin:0;font-size:12.5px;color:var(--gris);}
 
-  .tarjeta-dato.alerta{background:rgba(251,91,91,.1);border-color:rgba(251,91,91,.32);}
+  .tarjeta-dato.alerta{background:#fdf0ee;border-color:#f6d2cb;}
   .tarjeta-dato.alerta::before{background:linear-gradient(var(--lleno),#ff9a6b);}
   .tarjeta-dato.alerta .cifra{color:var(--lleno);}
-  .tarjeta-dato.margen{background:rgba(56,189,248,.1);border-color:rgba(56,189,248,.32);}
+  .tarjeta-dato.margen{background:#eef4fd;border-color:#cfe0f7;}
   .tarjeta-dato.margen::before{background:linear-gradient(var(--frio),var(--cian));}
   .tarjeta-dato.margen .cifra{color:var(--frio);}
 
@@ -236,15 +206,14 @@
   }
 
   .turno{
-    background:var(--panel);
-    border:1px solid var(--vidrio);
+    background:var(--blanco);
+    border:1px solid var(--linea);
     border-top:3px solid var(--gris);
-    border-radius:12px;
+    border-radius:10px;
     padding:17px 19px 19px;
     box-shadow:var(--sombra);
     text-align:center;
     overflow:hidden;
-    backdrop-filter:blur(14px);
     transition:transform .25s ease,box-shadow .25s ease;
     animation:aparecer .5s ease both;
   }
@@ -255,7 +224,7 @@
     width:calc(100% + 38px);
     aspect-ratio:1/1;
     margin:-17px -19px 14px;
-    background:#1a2036;
+    background:#eceff4;
     position:relative;
     display:flex;
     align-items:flex-end;
@@ -273,7 +242,7 @@
     text-shadow:0 1px 4px rgba(0,0,0,.45);
   }
 
-  .foto.sin-foto{background:linear-gradient(135deg,currentColor 0%,#1a2036 150%);}
+  .foto.sin-foto{background:linear-gradient(135deg,currentColor 0%,#dfe4ee 150%);}
   .foto.sin-foto img{display:none;}
   .foto.sin-foto .emoji{
     display:flex;
@@ -299,7 +268,7 @@
   .turno .personas b{font-family:"Space Grotesk",system-ui,sans-serif;font-size:22px;font-weight:700;}
   .turno .apodo{font-style:italic;font-weight:600;font-size:14px;margin:0 0 13px;}
 
-  .medidor{height:7px;background:rgba(255,255,255,.08);border-radius:99px;overflow:hidden;}
+  .medidor{height:7px;background:#eceff4;border-radius:99px;overflow:hidden;}
 
   .medidor span{
     display:block;height:100%;width:0;border-radius:99px;
@@ -362,18 +331,17 @@
     margin:22px 0;
     padding:30px;
     background:var(--panel);
-    border:1px solid var(--vidrio);
-    border-radius:12px;
+    border:1px solid var(--linea);
+    border-radius:10px;
     text-align:center;
     color:var(--gris);
-    backdrop-filter:blur(14px);
   }
 
   .vacio b{display:block;color:var(--tinta);font-size:16px;margin-bottom:5px;}
 
   @keyframes aparecer{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:none;}}
 
-  :focus-visible{outline:2px solid var(--cian);outline-offset:3px;}
+  :focus-visible{outline:2px solid var(--azul);outline-offset:3px;}
 
   @media (prefers-reduced-motion:reduce){
     *{transition:none!important;animation:none!important;}
