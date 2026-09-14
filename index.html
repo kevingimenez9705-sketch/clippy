@@ -285,29 +285,34 @@
 
   .turno.pasado{opacity:.45;}
 
-  .t-frio{border-top-color:var(--frio);}
+  .t-frio{border-top-color:var(--frio);box-shadow:var(--sombra),0 0 28px -8px rgba(47,128,237,.55);}
   .t-frio .hora,.t-frio .apodo{color:var(--frio);}
   .t-frio .foto{color:var(--frio);}
   .t-frio .medidor span{background:linear-gradient(90deg,var(--frio),#7dd3fc);box-shadow:0 0 10px var(--frio);}
-  .t-frio:hover{box-shadow:0 20px 44px -18px rgba(56,189,248,.45);}
+  .t-frio:hover{box-shadow:var(--sombra),0 0 46px -6px rgba(47,128,237,.75);}
 
-  .t-tibio{border-top-color:var(--tibio);}
+  .t-tibio{border-top-color:var(--tibio);box-shadow:var(--sombra),0 0 28px -8px rgba(227,154,28,.55);}
   .t-tibio .hora,.t-tibio .apodo{color:var(--tibio);}
   .t-tibio .foto{color:var(--tibio);}
   .t-tibio .medidor span{background:linear-gradient(90deg,var(--tibio),#fde68a);box-shadow:0 0 10px var(--tibio);}
-  .t-tibio:hover{box-shadow:0 20px 44px -18px rgba(251,191,36,.42);}
+  .t-tibio:hover{box-shadow:var(--sombra),0 0 46px -6px rgba(227,154,28,.75);}
 
-  .t-vivo{border-top-color:var(--vivo);}
+  .t-vivo{border-top-color:var(--vivo);box-shadow:var(--sombra),0 0 28px -8px rgba(46,155,87,.55);}
   .t-vivo .hora,.t-vivo .apodo{color:var(--vivo);}
   .t-vivo .foto{color:var(--vivo);}
   .t-vivo .medidor span{background:linear-gradient(90deg,var(--vivo),#6ee7b7);box-shadow:0 0 10px var(--vivo);}
-  .t-vivo:hover{box-shadow:0 20px 44px -18px rgba(52,211,153,.42);}
+  .t-vivo:hover{box-shadow:var(--sombra),0 0 46px -6px rgba(46,155,87,.75);}
 
-  .t-lleno{border-top-color:var(--lleno);}
+  .t-lleno{border-top-color:var(--lleno);animation:aparecer .5s ease both,alerta 2.2s ease-in-out .5s infinite;}
   .t-lleno .hora,.t-lleno .apodo{color:var(--lleno);}
   .t-lleno .foto{color:var(--lleno);}
   .t-lleno .medidor span{background:linear-gradient(90deg,var(--lleno),#ff9a6b);box-shadow:0 0 10px var(--lleno);}
-  .t-lleno:hover{box-shadow:0 20px 44px -18px rgba(251,91,91,.5);}
+  .t-lleno:hover{box-shadow:var(--sombra),0 0 56px -4px rgba(221,59,39,.9);}
+
+  @keyframes alerta{
+    0%,100%{box-shadow:var(--sombra),0 0 26px -8px rgba(221,59,39,.5);}
+    50%{box-shadow:var(--sombra),0 0 48px -6px rgba(221,59,39,.85);}
+  }
 
   /* ── pie ──────────────────────────────────── */
   .referencia{
