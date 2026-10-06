@@ -182,6 +182,26 @@
   .tarjeta-dato.margen::before{background:linear-gradient(var(--frio),var(--cian));}
   .tarjeta-dato.margen .cifra{color:var(--frio);}
 
+  /* ── selector de sala ─────────────────────── */
+  .salas{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 0;}
+  .salas[hidden]{display:none;}
+
+  .sala-chip{
+    font-family:"Poppins",system-ui,sans-serif;
+    font-size:13.5px;
+    font-weight:600;
+    color:var(--marino);
+    background:var(--panel);
+    border:1px solid var(--linea);
+    border-radius:99px;
+    padding:7px 16px;
+    cursor:pointer;
+    transition:background .2s ease,color .2s ease,border-color .2s ease;
+  }
+
+  .sala-chip:hover{border-color:var(--azul);}
+  .sala-chip[aria-pressed="true"]{background:var(--marino);border-color:var(--marino);color:#fff;}
+
   /* ── turnos ───────────────────────────────── */
   .titulo-seccion{
     font-family:"Space Grotesk",system-ui,sans-serif;
@@ -376,6 +396,8 @@
     </div>
   </section>
 
+  <nav class="salas" id="salas" aria-label="Sala" hidden></nav>
+
   <div class="resumen" id="resumen"></div>
   <div id="contenido"></div>
 
@@ -390,9 +412,15 @@
    ════════════════════════════════════════ */
 const CUPO_DEFAULT = 40;                  // mismo valor que el Code node de n8n
 const VENTANA_HS   = 72;
-// URL /exec de la Web App de Apps Script (ver apps-script.gs).
-// Dejalo en '' para trabajar con DATOS_DEMO.
-const FUENTE       = 'https://script.google.com/macros/s/AKfycbwsefXNHh2d0U6Lb0flkK9qAfYOf-IPZ_eIuS4YLYSHyGtNA_kbn5fwyWKn1KUJbCP_LQ/exec';
+// Una entrada por sala. `fuente` es la URL /exec de la Web App de Apps Script
+// de la planilla de esa sala (ver apps-script.gs / Panel.gs).
+// Con fuente '' la sala no se consulta; si todas están en '' se usa DATOS_DEMO.
+// Con una sola fuente el panel se ve como siempre; con dos o más aparece el
+// selector de sala y cada turno indica a qué sala pertenece.
+const SALAS = [
+  { sede:'Florida', cupo:40, fuente:'https://script.google.com/macros/s/AKfycbwsefXNHh2d0U6Lb0flkK9qAfYOf-IPZ_eIuS4YLYSHyGtNA_kbn5fwyWKn1KUJbCP_LQ/exec' },
+  { sede:'Adrogué', cupo:40, fuente:'https://script.google.com/macros/s/AKfycbyabRF1XSu-y0iB4_qZIJEmNdL8dPWuOQCZl4y-vx6GkgzPCVc1qdhm3vgtskKYH9qZ/exec' }
+];
 const REFRESCO_MS  = 60000;
 
 /* Imágenes. Dejá '' en cualquiera y cae al emoji / al degradé liso. */
@@ -452,7 +480,13 @@ const escapar = (s) => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;
    DATOS
    ════════════════════════════════════════ */
 let TURNOS = [];
+let CAIDAS = [];        // salas que no respondieron en la última lectura
+let SALA_ACTIVA = '';   // '' = todas las salas
 let proximoTurno = null;
+
+const llave = (s) => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g,'').trim().toLowerCase();
+const SALAS_ACTIVAS = SALAS.filter(s => s.fuente);
+const HAY_SALAS = SALAS_ACTIVAS.length > 1;
 
 function normalizar(filas){
   return filas.map(f => {
@@ -470,33 +504,60 @@ function normalizar(filas){
 }
 
 async function traer(){
-  if (!FUENTE) return DATOS_DEMO;
+  if (!SALAS_ACTIVAS.length) return { filas:DATOS_DEMO, caidas:[] };
 
-  try{
-    const r = await fetch(`${FUENTE}?t=${Date.now()}`, {cache:'no-store'});
-    if (!r.ok) throw new Error(r.status);
-    const j = await r.json();
-    return Array.isArray(j) ? j : (j.detalle || DATOS_DEMO);
-  }catch(e){
-    // Apps Script a veces rebota el fetch por CORS: reintenta por JSONP
+  // Todas las salas en paralelo: si una no responde, las demás se muestran igual
+  const lecturas = await Promise.all(SALAS_ACTIVAS.map(async (sala) => {
     try{
-      const j = await traerJsonp();
-      return Array.isArray(j) ? j : (j.detalle || DATOS_DEMO);
-    }catch(e2){
-      return DATOS_DEMO;
+      return { sala, filas: await traerSala(sala.fuente) };
+    }catch(e){
+      return { sala, filas:null };
+    }
+  }));
+
+  const caidas = lecturas.filter(l => !l.filas).map(l => l.sala.sede);
+  if (caidas.length === lecturas.length) return { filas:DATOS_DEMO, caidas:[] };
+
+  const filas = [];
+  for (const l of lecturas){
+    if (!l.filas) continue;
+    for (const f of l.filas){
+      filas.push({
+        ...f,
+        sede: HAY_SALAS ? l.sala.sede : f.sede,
+        cupo: Number(f.cupo) || l.sala.cupo
+      });
     }
   }
+  return { filas, caidas };
 }
 
-function traerJsonp(){
+async function traerSala(fuente){
+  let j;
+  try{
+    const r = await fetch(`${fuente}?t=${Date.now()}`, {cache:'no-store'});
+    if (!r.ok) throw new Error(r.status);
+    j = await r.json();
+  }catch(e){
+    // Apps Script a veces rebota el fetch por CORS: reintenta por JSONP
+    j = await traerJsonp(fuente);
+  }
+  const filas = Array.isArray(j) ? j : (j && j.detalle);
+  if (!Array.isArray(filas)) throw new Error('formato');
+  return filas;
+}
+
+let jsonpN = 0;
+
+function traerJsonp(fuente){
   return new Promise((resolve, reject) => {
-    const nombre = `clippy_${Date.now()}`;
+    const nombre = `clippy_${Date.now()}_${jsonpN++}`;
     const tag = document.createElement('script');
     const limpiar = () => { delete window[nombre]; tag.remove(); };
 
     window[nombre] = (datos) => { limpiar(); resolve(datos); };
     tag.onerror = () => { limpiar(); reject(new Error('jsonp')); };
-    tag.src = `${FUENTE}?callback=${nombre}&t=${Date.now()}`;
+    tag.src = `${fuente}?callback=${nombre}&t=${Date.now()}`;
     document.body.appendChild(tag);
 
     setTimeout(() => { if (window[nombre]){ limpiar(); reject(new Error('timeout')); } }, 8000);
@@ -508,13 +569,15 @@ function traerJsonp(){
    ════════════════════════════════════════ */
 function pintar(){
   const ahora = new Date();
-  const vigentes = TURNOS.filter(t => t.fecha >= new Date(ahora - MS_HORA));
+  const base = (HAY_SALAS && SALA_ACTIVA) ? TURNOS.filter(t => t.sede === SALA_ACTIVA) : TURNOS;
+  const vigentes = base.filter(t => t.fecha >= new Date(ahora - MS_HORA));
   const enVentana = vigentes.filter(t => (t.fecha-ahora)/MS_HORA <= VENTANA_HS);
   proximoTurno = vigentes[0] || null;
 
   pintarFicha(ahora);
   pintarReferencia();
-  $('sello').textContent = `Última lectura ${pad(ahora.getHours())}:${pad(ahora.getMinutes())}.`;
+  $('sello').textContent = `Última lectura ${pad(ahora.getHours())}:${pad(ahora.getMinutes())}.`
+    + (CAIDAS.length ? ` Sin conexión con ${CAIDAS.join(' y ')}.` : '');
 
   if (!vigentes.length){
     $('resumen').innerHTML = '';
@@ -540,10 +603,19 @@ function pintar(){
       <div><p class="titulo">${d.titulo}</p><p class="sub">${escapar(d.sub)}</p></div>
     </div>`).join('');
 
-  const lista = enVentana.length ? enVentana : vigentes.slice(0,8);
+  let lista = enVentana.length ? enVentana : vigentes.slice(0,8);
+
+  // Con todas las salas a la vista, cada día se separa por sala
+  const separar = HAY_SALAS && !SALA_ACTIVA;
+  if (separar){
+    const orden = (t) => SALAS_ACTIVAS.findIndex(s => s.sede === t.sede);
+    const dia = (t) => new Date(t.fecha.getFullYear(), t.fecha.getMonth(), t.fecha.getDate()).getTime();
+    lista = [...lista].sort((a,b) => dia(a)-dia(b) || orden(a)-orden(b) || a.fecha-b.fecha);
+  }
+
   const porDia = new Map();
   for (const t of lista){
-    const rot = rotularDia(t.fecha, ahora);
+    const rot = rotularDia(t.fecha, ahora) + (separar ? ` · ${t.sede}` : '');
     if (!porDia.has(rot)) porDia.set(rot, []);
     porDia.get(rot).push(t);
   }
@@ -598,7 +670,41 @@ function pintarFicha(ahora){
   }
   const p = proximoTurno;
   $('ficha-titulo').textContent = `${rotularDia(p.fecha, ahora)} ${pad(p.fecha.getHours())}:${pad(p.fecha.getMinutes())}`;
-  $('ficha-nota').textContent = `${p.confirmados} confirmados · ${p.tramo.emoji} ${p.tramo.texto}`;
+  $('ficha-nota').textContent = `${HAY_SALAS ? p.sede + ' · ' : ''}${p.confirmados} confirmados · ${p.tramo.emoji} ${p.tramo.texto}`;
+}
+
+/* Selector de sala: solo aparece si hay dos o más salas con fuente */
+function armarSalas(){
+  const nav = $('salas');
+  const opciones = [{ sede:'', texto:'Todas las salas' }]
+    .concat(SALAS_ACTIVAS.map(s => ({ sede:s.sede, texto:s.sede })));
+
+  nav.innerHTML = opciones.map(o =>
+    `<button type="button" class="sala-chip" data-sala="${escapar(o.sede)}">${escapar(o.texto)}</button>`).join('');
+  nav.hidden = false;
+  marcarSala();
+
+  nav.addEventListener('click', (e) => {
+    const chip = e.target.closest('.sala-chip');
+    if (!chip) return;
+    SALA_ACTIVA = chip.dataset.sala;
+
+    // La sala elegida queda en el link (?sala=adrogue) para poder compartirlo
+    const url = new URL(location.href);
+    if (SALA_ACTIVA) url.searchParams.set('sala', llave(SALA_ACTIVA));
+    else url.searchParams.delete('sala');
+    history.replaceState(null, '', url);
+
+    marcarSala();
+    pintar();
+    tic();
+  });
+}
+
+function marcarSala(){
+  document.querySelectorAll('.sala-chip').forEach(chip => {
+    chip.setAttribute('aria-pressed', String(chip.dataset.sala === SALA_ACTIVA));
+  });
 }
 
 function pintarReferencia(){
@@ -617,8 +723,17 @@ function tic(){
 }
 
 async function recargar(){
-  TURNOS = normalizar(await traer());
+  const lectura = await traer();
+  TURNOS = normalizar(lectura.filas);
+  CAIDAS = lectura.caidas;
   pintar();
+}
+
+if (HAY_SALAS){
+  const pedida = llave(new URLSearchParams(location.search).get('sala'));
+  const hallada = SALAS_ACTIVAS.find(s => llave(s.sede) === pedida);
+  if (hallada) SALA_ACTIVA = hallada.sede;
+  armarSalas();
 }
 
 if (BANNER){
