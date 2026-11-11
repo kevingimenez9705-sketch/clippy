@@ -43,6 +43,12 @@ const APP_PLANILLA = '';
    ========================================================= */
 
 function appPagina_() {
+  if (!appEsElUsuario_()) {
+    return HtmlService.createHtmlOutput(
+      '<p style="font:15px system-ui;padding:24px">El tablero se abre desde su propio link ' +
+      '(implementación con "Ejecutar como: Usuario que accede a la aplicación web").</p>'
+    ).setTitle('Tablero de citaciones');
+  }
   return HtmlService
     .createHtmlOutputFromFile('App')
     .setTitle('Citaciones · Selección Operativa')
@@ -54,6 +60,21 @@ function appPagina_() {
 function abrirTablero() {
   const html = HtmlService.createHtmlOutputFromFile('App').setWidth(1200).setHeight(680);
   SpreadsheetApp.getUi().showModelessDialog(html, 'Tablero de citaciones');
+}
+
+// El tablero muestra postulantes y manda mails: solo corre con la cuenta de quien
+// lo usa. En una implementación pública "Ejecutar como: Yo" (como la del panel
+// Clippy) no responde, así nadie ve datos ni cita en nombre del dueño.
+function appEsElUsuario_() {
+  const activo = String(Session.getActiveUser().getEmail() || '').trim().toLowerCase();
+  const efectivo = String(Session.getEffectiveUser().getEmail() || '').trim().toLowerCase();
+  return !!activo && activo === efectivo;
+}
+
+function appSoloUsuario_() {
+  if (!appEsElUsuario_()) {
+    throw new Error('El tablero tiene que abrirse desde su propio link (implementación con "Ejecutar como: Usuario que accede a la aplicación web").');
+  }
 }
 
 // La planilla de citaciones: la del proyecto, o la que abre la Botonera por ID
@@ -102,6 +123,7 @@ function appVerificar_() {
    ========================================================= */
 
 function appInicio() {
+  appSoloUsuario_();
   appVerificar_();
   const libro = appLibro_();
   const yo = citador_();
@@ -143,6 +165,7 @@ function appSugerida_(pestanas, yo) {
    ========================================================= */
 
 function appListar(pestana) {
+  appSoloUsuario_();
   const hoja = appPestana_(pestana);
 
   return {
@@ -263,6 +286,7 @@ function appColumnaQueEmpieza_(mapa, inicio) {
    ========================================================= */
 
 function appAsignar(pestana, pedidas, fecha, hora) {
+  appSoloUsuario_();
   const quitar = !fecha && !hora;
   const horaFinal = quitar ? '' : appFechaHora_(fecha, hora, 'Elegí fecha y hora.').hora;
 
@@ -373,6 +397,7 @@ function appA1_(fila, columna) {
    ========================================================= */
 
 function appCitar(pestana, claves) {
+  appSoloUsuario_();
   validarConfig_();
 
   const hoja = appPestana_(pestana);
@@ -464,6 +489,7 @@ function appCitar(pestana, claves) {
    ========================================================= */
 
 function appEliminarEnviadas(pestana) {
+  appSoloUsuario_();
   const hoja = appPestana_(pestana);
   let eliminadas = 0;
 
@@ -511,6 +537,7 @@ function appEliminarEnviadas(pestana) {
    ========================================================= */
 
 function appConfirmados() {
+  appSoloUsuario_();
   appLibro_();
   const destino = obtenerHojaConfirmados_();
   const hoja = destino.hoja;
@@ -548,6 +575,7 @@ function appConfirmados() {
 // del menú (recopilar_ de Codigo.gs). Si la planilla se abre por link, una copia
 // que lee las citaciones de esa planilla (como hace la Botonera).
 function appRecopilar() {
+  appSoloUsuario_();
   if (SpreadsheetApp.getActiveSpreadsheet() && typeof recopilar_ === 'function') {
     const r = recopilar_(true);
     if (!r) throw new Error('Hay otro envío o recopilación en curso. Probá de nuevo en un minuto.');
@@ -641,6 +669,7 @@ function appCitasPorEmail_() {
 
 // "📩 Organizar confirmaciones en Gmail": etiqueta por sede y archiva
 function appOrganizarGmail() {
+  appSoloUsuario_();
   const BUSQUEDA = 'subject:(Confirmacion OR Confirmación OR ENTREVISTA) label:inbox';
   const etiquetas = {};
   const etiqueta = nombre => {
@@ -690,6 +719,7 @@ function appOrganizarGmail() {
 
 // elegidas: [{ a: fila del ATS, e: email }]
 function appTraerAts(pestana, elegidas, fecha, hora) {
+  appSoloUsuario_();
   const lista = Array.isArray(elegidas) ? elegidas : [];
   const ats = appLeerAts_();
   const ca = ats.col;
@@ -728,6 +758,7 @@ function appTraerAts(pestana, elegidas, fecha, hora) {
 
 // personas: [{ id, nombre, edad, email, zona, localidad, puesto, disp, puntaje }] (texto)
 function appAgregarManual(pestana, personas, fecha, hora) {
+  appSoloUsuario_();
   const lista = (Array.isArray(personas) ? personas : []).map(p => {
     const limpia = {};
     ['id', 'nombre', 'edad', 'email', 'zona', 'localidad', 'puesto', 'disp', 'puntaje'].forEach(campo => {
@@ -831,6 +862,7 @@ function appAgregarFilas_(pestana, personas, fecha, hora) {
    ========================================================= */
 
 function appAts() {
+  appSoloUsuario_();
   const ats = appLeerAts_();
   const donde = appMailsEnCitaciones_();
   const c = ats.col;

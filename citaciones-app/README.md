@@ -82,6 +82,11 @@ Recargar la planilla → menú **📞 Citar → 🖥️ Abrir tablero**.
 
 La implementación que ya usa el panel Clippy no se toca: queda en su versión.
 
+**Seguridad:** el tablero solo responde si corre con la cuenta de quien lo abre.
+En la implementación pública del panel ("Ejecutar como: Yo", cualquier usuario)
+`?vista=app` muestra un aviso y las funciones del tablero no devuelven datos ni
+mandan mails, aunque esa implementación se actualice a una versión nueva.
+
 ## Acceso
 
 - Corre con la cuenta de quien lo abre: cada uno cita desde su mail y recopila
