@@ -22,6 +22,16 @@
    bloque y listar los confirmados.
    ========================================================= */
 
+/* ── configuración ─────────────────────────────────────── */
+
+// Planilla del ATS de donde se traen postulantes ("Tareas grupales/zonas").
+// Pegar el link o el ID. Vacío = la sección "Traer del ATS" avisa que falta.
+const APP_ATS = {
+  PLANILLA: '',
+  HOJA: 'ATS - Postulaciones'
+};
+
+
 function appPagina_() {
   return HtmlService
     .createHtmlOutputFromFile('App')
@@ -327,4 +337,276 @@ function appConfirmados() {
     sedes: Object.keys(CONFIG.SEDES),
     leido: Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'HH:mm')
   };
+}
+
+
+/* =========================================================
+   TRAER DEL ATS
+   Lee "ATS - Postulaciones" (solo lectura) y copia las personas
+   elegidas al final de una pestaña de citaciones, columna por
+   columna según el nombre del encabezado (Id, Nombre, Edad, Email,
+   Zona, Localidad, Puesto, Disp., Puntaje). Opcional: con fecha y
+   hora de entrevista ya puestas. Nunca duplica un mail en la
+   pestaña destino.
+   ========================================================= */
+
+function appAts() {
+  const ats = leerAts_();
+  const donde = mailsEnCitaciones_();
+  const c = ats.col;
+  const filas = [];
+
+  ats.visibles.forEach((vis, i) => {
+    if (!vis.some(v => String(v).trim())) return;
+    const email = celda_(vis, c.email);
+    const estaEn = donde[email.toLowerCase()] || null;
+    const zona = celda_(vis, c.zona);
+
+    filas.push({
+      a: i + 2,                                   // fila en el ATS
+      id: celda_(vis, c.id),
+      n: celda_(vis, c.nombre),
+      e: email,
+      ed: celda_(vis, c.edad),
+      z: zona,
+      zc: zonaCanonica_(zona),
+      l: celda_(vis, c.localidad),
+      p: celda_(vis, c.puesto),
+      d: celda_(vis, c.disp),
+      pt: celda_(vis, c.puntaje),
+      ok: mailValido_(email),
+      en: estaEn ? estaEn.pestanas : [],          // pestañas de citaciones donde ya está
+      env: estaEn ? estaEn.enviado : false        // ya se le mandó la citación
+    });
+  });
+
+  return {
+    filas: filas,
+    hoja: ats.hoja.getName(),
+    planilla: ats.hoja.getParent().getName(),
+    leido: Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'HH:mm')
+  };
+}
+
+// elegidas: [{ a: fila del ATS, e: email }]; fecha "aaaa-mm-dd" y hora "hh:mm" opcionales (las dos o ninguna)
+function appTraerAts(pestana, elegidas, fecha, hora) {
+  const conFecha = !!(fecha || hora);
+  let horaFinal = '';
+
+  if (conFecha) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(fecha || ''))) {
+      throw new Error('Para agregarlos con entrevista elegí fecha y hora (o dejá las dos vacías).');
+    }
+    const m = String(hora || '').match(/^(\d{1,2}):(\d{2})$/);
+    horaFinal = m ? armarHora_(m[1], m[2]) : CONFIG.SIN_DATO;
+    if (horaFinal === CONFIG.SIN_DATO) {
+      throw new Error('Para agregarlos con entrevista elegí fecha y hora (o dejá las dos vacías).');
+    }
+  }
+
+  const lista = Array.isArray(elegidas) ? elegidas : [];
+  const resultado = { agregadas: 0, yaEstaban: 0, sinMail: 0, noEncontradas: 0, pestana: '', personas: [] };
+  if (!lista.length) return resultado;
+
+  const hoja = pestanaCitaciones_(pestana);
+  resultado.pestana = hoja.getName();
+
+  const lock = LockService.getScriptLock();
+  if (!lock.tryLock(30000)) {
+    throw new Error('Hay otro envío o recopilación en curso. Probá de nuevo en un minuto.');
+  }
+
+  try {
+    const ats = leerAts_();
+    const ca = ats.col;
+
+    // Columnas de la pestaña destino (las obligatorias, como el menú, más las del ATS que tenga)
+    const encabezados = hoja.getRange(1, 1, 1, hoja.getLastColumn()).getDisplayValues()[0];
+    const cd = columnasCitaciones_(encabezados);
+    const mapa = mapaColumnas_(encabezados);
+    const destino = {
+      id: buscar_(mapa, ['id']),
+      nombre: cd.nombre,
+      edad: buscar_(mapa, ['edad']),
+      email: cd.email,
+      zona: cd.zona,
+      localidad: buscar_(mapa, ['localidad']),
+      puesto: cd.puesto,
+      disp: columnaQueEmpieza_(mapa, 'disp'),
+      puntaje: columnaQueEmpieza_(mapa, 'puntaje')
+    };
+
+    // Mails que ya están en la pestaña destino: no se repiten
+    const ultimaFila = hoja.getLastRow();
+    const yaEstan = {};
+    if (ultimaFila >= 2) {
+      hoja.getRange(2, cd.email + 1, ultimaFila - 1, 1).getDisplayValues()
+        .forEach(f => { const e = celda_(f, 0).toLowerCase(); if (e) yaEstan[e] = true; });
+    }
+
+    // Fila del ATS de cada mail, por si el ATS cambió desde que se abrió la lista
+    const filaAts = {};
+    ats.visibles.forEach((vis, i) => {
+      const e = celda_(vis, ca.email).toLowerCase();
+      if (e && filaAts[e] === undefined) filaAts[e] = i;
+    });
+
+    const usados = Object.keys(destino).map(k => destino[k])
+      .concat([cd.fecha, cd.hora])
+      .filter(i => i !== undefined);
+    const ancho = Math.max.apply(null, usados) + 1;
+    const nuevas = [];
+
+    lista.forEach(elegida => {
+      const pedido = String((elegida && elegida.e) || '').trim().toLowerCase();
+      let i = Number(elegida && elegida.a) - 2;
+
+      if (!(i >= 0 && i < ats.visibles.length && celda_(ats.visibles[i], ca.email).toLowerCase() === pedido)) {
+        i = filaAts[pedido];
+      }
+      if (i === undefined || !pedido) {
+        resultado.noEncontradas++;
+        return;
+      }
+
+      const vis = ats.visibles[i];
+      const val = ats.valores[i];
+      const email = celda_(vis, ca.email);
+
+      if (!mailValido_(email)) {
+        resultado.sinMail++;
+        return;
+      }
+      if (yaEstan[email.toLowerCase()]) {
+        resultado.yaEstaban++;
+        return;
+      }
+      yaEstan[email.toLowerCase()] = true;
+
+      const fila = new Array(ancho).fill('');
+      Object.keys(destino).forEach(campo => {
+        if (destino[campo] === undefined || ca[campo] === undefined) return;
+        const v = val[ca[campo]];
+        fila[destino[campo]] = typeof v === 'string' ? seguro_(v.trim()) : v;
+      });
+      if (conFecha) {
+        fila[cd.fecha] = Utilities.parseDate(fecha, hoja.getParent().getSpreadsheetTimeZone(), 'yyyy-MM-dd');
+        fila[cd.hora] = horaFinal;
+      }
+
+      nuevas.push(fila);
+      resultado.personas.push(email + '|' + celda_(vis, ca.nombre));
+    });
+
+    if (nuevas.length) {
+      const primera = hoja.getLastRow() + 1;
+      const faltan = primera + nuevas.length - 1 - hoja.getMaxRows();
+      if (faltan > 0) {
+        hoja.insertRowsAfter(hoja.getMaxRows(), faltan);
+      }
+
+      // La hora va como texto ("09:30") y la fecha como fecha, igual que appAsignar
+      hoja.getRange(primera, cd.hora + 1, nuevas.length, 1).setNumberFormat('@');
+      hoja.getRange(primera, 1, nuevas.length, ancho).setValues(nuevas);
+      if (conFecha) {
+        hoja.getRange(primera, cd.fecha + 1, nuevas.length, 1).setNumberFormat('dd/mm/yyyy');
+      }
+      SpreadsheetApp.flush();
+    }
+
+    resultado.agregadas = nuevas.length;
+    return resultado;
+
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function hojaAts_() {
+  const ref = String(APP_ATS.PLANILLA || '').trim();
+  if (!ref) {
+    throw new Error('Falta configurar la planilla del ATS: pegá su link en APP_ATS.PLANILLA (AppCitaciones.gs).');
+  }
+
+  const id = (ref.match(/\/d\/([a-zA-Z0-9_-]+)/) || [null, ref])[1];
+  let libro;
+  try {
+    libro = SpreadsheetApp.openById(id);
+  } catch (error) {
+    throw new Error('No se pudo abrir la planilla del ATS. Revisá APP_ATS.PLANILLA y que tengas acceso.\n\n' + error.message);
+  }
+
+  const hoja = libro.getSheetByName(APP_ATS.HOJA);
+  if (!hoja) {
+    throw new Error(`No encontré la pestaña "${APP_ATS.HOJA}" en la planilla del ATS.`);
+  }
+  return hoja;
+}
+
+function leerAts_() {
+  const hoja = hojaAts_();
+  const ultimaFila = hoja.getLastRow();
+  const ultimaCol = hoja.getLastColumn();
+  if (ultimaCol < 1) {
+    throw new Error(`La pestaña "${hoja.getName()}" del ATS está vacía.`);
+  }
+
+  const encabezados = hoja.getRange(1, 1, 1, ultimaCol).getDisplayValues()[0];
+  const mapa = mapaColumnas_(encabezados);
+  const col = {
+    id: buscar_(mapa, ['id']),
+    nombre: buscar_(mapa, ALIAS.nombre),
+    edad: buscar_(mapa, ['edad']),
+    email: buscar_(mapa, ALIAS.email),
+    zona: buscar_(mapa, ['zona']),
+    localidad: buscar_(mapa, ['localidad']),
+    puesto: buscar_(mapa, ['puesto']),
+    disp: columnaQueEmpieza_(mapa, 'disp'),
+    puntaje: columnaQueEmpieza_(mapa, 'puntaje')
+  };
+  if (col.email === undefined) {
+    throw new Error(`Falta la columna "Email" en "${hoja.getName()}" del ATS.`);
+  }
+
+  const usadas = Object.keys(col).map(k => col[k]).filter(i => i !== undefined);
+  const ancho = Math.max.apply(null, usadas) + 1;
+
+  if (ultimaFila < 2) {
+    return { hoja: hoja, col: col, valores: [], visibles: [] };
+  }
+  const rango = hoja.getRange(2, 1, ultimaFila - 1, ancho);
+  return { hoja: hoja, col: col, valores: rango.getValues(), visibles: rango.getDisplayValues() };
+}
+
+// mail → { pestanas: [...], enviado } en todas las pestañas de citaciones
+function mailsEnCitaciones_() {
+  const donde = {};
+
+  libroCitaciones_().getSheets().forEach(hoja => {
+    if (!esHojaCitaciones_(hoja.getName())) return;
+    const ultimaFila = hoja.getLastRow();
+    if (ultimaFila < 2) return;
+
+    const encabezados = hoja.getRange(1, 1, 1, hoja.getLastColumn()).getDisplayValues()[0];
+    const mapa = mapaColumnas_(encabezados);
+    const cEmail = buscar_(mapa, ALIAS.email);
+    const cEstado = buscar_(mapa, ['estado envio']);
+    if (cEmail === undefined) return;
+
+    const ancho = Math.max(cEmail, cEstado === undefined ? 0 : cEstado) + 1;
+    hoja.getRange(2, 1, ultimaFila - 1, ancho).getDisplayValues().forEach(f => {
+      const e = celda_(f, cEmail).toLowerCase();
+      if (!e) return;
+      const d = donde[e] || (donde[e] = { pestanas: [], enviado: false });
+      if (d.pestanas.indexOf(hoja.getName()) === -1) d.pestanas.push(hoja.getName());
+      if (cEstado !== undefined && celda_(f, cEstado).toUpperCase() === 'ENVIADO') d.enviado = true;
+    });
+  });
+
+  return donde;
+}
+
+// El ATS pone "sin email · Id 123" cuando no hay mail: eso no se puede citar
+function mailValido_(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email || '').trim());
 }

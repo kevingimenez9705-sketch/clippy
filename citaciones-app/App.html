@@ -230,6 +230,11 @@
   .estado-linea{font-size:12px;color:var(--gris);margin:-4px 0 10px;}
   .chip-check{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--tinta);cursor:pointer;min-height:36px;padding:0 4px;}
   .chip-check input{width:16px;height:16px;margin:0;}
+  .destino{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--gris);}
+  .accion .etq{font-size:12px;color:#b7c4e3;}
+  tbody tr.bloqueada{cursor:default;color:var(--tenue);}
+  tbody tr.bloqueada:hover{background:none;}
+  .chips-mini{display:flex;flex-wrap:wrap;gap:4px;}
 
   @media (max-width:640px){
     .cabecera h1{font-size:22px;}
@@ -252,6 +257,7 @@
 
   <nav class="nav" role="tablist" aria-label="Secciones">
     <button type="button" role="tab" id="tab-bandeja" aria-controls="v-bandeja" aria-selected="true" data-vista="bandeja">Bandeja</button>
+    <button type="button" role="tab" id="tab-ats" aria-controls="v-ats" aria-selected="false" data-vista="ats">＋ Traer del ATS</button>
     <button type="button" role="tab" id="tab-confirmados" aria-controls="v-confirmados" aria-selected="false" data-vista="confirmados">Confirmados</button>
   </nav>
 
@@ -301,6 +307,48 @@
     </div>
   </section>
 
+  <!-- ══ TRAER DEL ATS ═════════════════════════════ -->
+  <section id="v-ats" role="tabpanel" aria-labelledby="tab-ats" hidden>
+    <div class="filtros">
+      <label class="destino">Agregar a <select id="t-pestana" class="pestana-sel" aria-label="Pestaña de citaciones donde se agregan"></select></label>
+      <input id="t-q" class="buscar" type="search" placeholder="Buscar en el ATS: nombre, mail, localidad o Id" aria-label="Buscar en el ATS">
+      <select id="t-zona" aria-label="Zona"></select>
+      <select id="t-puesto" aria-label="Puesto"></select>
+      <select id="t-punt" aria-label="Puntaje"></select>
+      <select id="t-disp" aria-label="Disponibilidad"></select>
+      <select id="t-orden" aria-label="Orden">
+        <option value="nuevos">Más nuevos primero</option>
+        <option value="puntaje">Puntaje (mayor primero)</option>
+        <option value="nombre">Nombre A–Z</option>
+      </select>
+      <label class="chip-check"><input type="checkbox" id="t-todos"> Ver también los que ya están en una pestaña</label>
+      <button type="button" class="btn" id="t-recargar" title="Volver a leer el ATS">↻ Actualizar</button>
+    </div>
+    <p class="estado-linea" id="t-leido"></p>
+    <div class="tabla-caja">
+      <table>
+        <thead>
+          <tr>
+            <th class="c-check"><input type="checkbox" id="t-sel-todas" aria-label="Elegir todas las filas filtradas"></th>
+            <th>Postulante</th>
+            <th>Edad</th>
+            <th>Zona</th>
+            <th>Puesto</th>
+            <th>Disp.</th>
+            <th>Puntaje</th>
+            <th>Id</th>
+            <th>En citaciones</th>
+          </tr>
+        </thead>
+        <tbody id="t-filas"><tr><td colspan="9" class="cargando">Cargando…</td></tr></tbody>
+      </table>
+    </div>
+    <div class="pie-tabla">
+      <span id="t-cuenta"></span>
+      <button type="button" class="btn chico" id="t-mas" hidden>Mostrar más</button>
+    </div>
+  </section>
+
   <!-- ══ CONFIRMADOS ══════════════════════════════ -->
   <section id="v-confirmados" role="tabpanel" aria-labelledby="tab-confirmados" hidden>
     <div class="filtros">
@@ -331,6 +379,18 @@
   <button type="button" class="btn citar" id="a-citar">✉️ Citar</button>
   <button type="button" class="btn" id="a-cancelar">Cancelar</button>
   <span class="nota" id="a-nota"></span>
+</div>
+
+<!-- barra al elegir en el ATS -->
+<div class="accion" id="accion-ats" hidden>
+  <span class="n" id="t-n"></span>
+  <span class="sep"></span>
+  <span class="etq">Entrevista (opcional)</span>
+  <input type="date" id="t-fecha" aria-label="Fecha de entrevista (opcional)">
+  <input type="time" id="t-hora" step="900" list="horarios" aria-label="Hora de entrevista (opcional)">
+  <button type="button" class="btn primario" id="t-agregar">Agregar</button>
+  <button type="button" class="btn" id="t-cancelar">Cancelar</button>
+  <span class="nota" id="t-nota"></span>
 </div>
 
 <dialog id="modal"><div class="modal" id="modal-cuerpo"></div></dialog>
@@ -453,6 +513,10 @@ const S = {
   limite: POR_PAGINA,
   conf: null,
   cf: { q:'', sede:'', pasados:false },
+  ats: null,               // lista del ATS (se lee al abrir la pestaña)
+  tf: { q:'', zona:'', puesto:'', punt:'', disp:'', orden:'nuevos', todos:false },
+  tsel: new Set(),         // filas del ATS elegidas
+  tlimite: POR_PAGINA,
   ocupado: false
 };
 
@@ -488,6 +552,9 @@ async function iniciar(){
   }
   S.pestana = S.ini.sugerida;
   sel.value = S.pestana;
+  $('#t-pestana').innerHTML = sel.innerHTML;
+  $('#t-pestana').value = S.pestana;
+  $('#t-fecha').min = S.ini.hoy;
   await cargarBandeja();
 }
 
@@ -561,7 +628,7 @@ function filtradas(conEstado = true){
     (!S.f.puesto || r.p === S.f.puesto) &&
     (!S.f.disp || r.d === S.f.disp) &&
     (!S.f.punt || ((puntaje(r.pt) || {}).cat || '-') === S.f.punt) &&
-    (!conEstado || !S.f.st || r.st === S.f.st));
+    (!conEstado || !S.f.st || (S.f.st === 'sel' ? S.sel.has(r.f) : r.st === S.f.st)));
 
   const orden = {
     planilla: (a, b) => a.f - b.f,
@@ -582,10 +649,11 @@ function pintarBandeja(){
   const cuenta = {};
   base.forEach(r => { cuenta[r.st] = (cuenta[r.st] || 0) + 1; });
   const chips = [{ st:'', txt:'Todas', n:base.length }]
+    .concat(S.sel.size || S.f.st === 'sel' ? [{ st:'sel', txt:'Seleccionadas', n:base.filter(r => S.sel.has(r.f)).length }] : [])
     .concat(ORDEN_ESTADOS.filter(st => cuenta[st] || st === S.f.st).map(st => ({ st, txt:ESTADOS[st].txt, n:cuenta[st] || 0 })));
   $('#estados').innerHTML = chips.map(c => `
     <button type="button" class="estado-chip" data-st="${c.st}" aria-pressed="${S.f.st === c.st}">
-      ${c.st ? `<span class="punto" style="background:${ESTADOS[c.st].color}"></span>` : ''}${esc(c.txt)} <b>${fmt(c.n)}</b>
+      ${ESTADOS[c.st] ? `<span class="punto" style="background:${ESTADOS[c.st].color}"></span>` : ''}${esc(c.txt)} <b>${fmt(c.n)}</b>
     </button>`).join('');
 
   const lista = filtradas();
@@ -644,6 +712,7 @@ const seleccionadas = () => S.filas.filter(r => S.sel.has(r.f));
 function pintarAccion(){
   const n = S.sel.size;
   $('#accion').hidden = n === 0 || $('#v-bandeja').hidden;
+  pintarAccionAts();
   if (!n) return;
   const sel = seleccionadas();
   const citables = sel.filter(r => r.k).length;
@@ -664,6 +733,7 @@ function pintarAccion(){
 $('#f-pestana').addEventListener('change', (e) => {
   S.pestana = e.target.value;
   S.f.st = '';
+  $('#t-pestana').value = S.pestana;
   cargarBandeja();
 });
 let buscarT = null;
@@ -842,6 +912,226 @@ async function limpiarEnviadas(){
 }
 
 /* ════════════════════════════════════════
+   TRAER DEL ATS
+   ════════════════════════════════════════ */
+async function cargarAts(){
+  $('#t-filas').innerHTML = `<tr><td colspan="9" class="cargando">Leyendo el ATS…</td></tr>`;
+  $('#t-leido').textContent = '';
+  try{
+    S.ats = await servidor('appAts');
+    S.tsel.clear();
+    S.tlimite = POR_PAGINA;
+    armarFiltrosAts();
+    pintarAts();
+  }catch(e){
+    S.ats = null;
+    $('#t-filas').innerHTML = `<tr><td colspan="9" class="vacio"><b>No se pudo leer el ATS</b>${esc(mensajeDe(e))}</td></tr>`;
+  }
+}
+
+function armarFiltrosAts(){
+  const filas = S.ats.filas;
+  const distintos = (campo) => [...new Set(filas.map(r => r[campo]).filter(Boolean))].sort((a,b) => a.localeCompare(b, 'es'));
+  const opciones = (id, titulo, valores, clave) => {
+    const el = $(id);
+    el.innerHTML = `<option value="">${titulo}</option>` + valores.map(v => `<option value="${esc(v)}">${esc(v)}</option>`).join('');
+    el.value = valores.includes(S.tf[clave]) ? S.tf[clave] : '';
+    S.tf[clave] = el.value;
+  };
+  opciones('#t-zona', 'Todas las zonas', distintos('z'), 'zona');
+  opciones('#t-puesto', 'Todos los puestos', distintos('p'), 'puesto');
+  opciones('#t-disp', 'Toda disponibilidad', distintos('d'), 'disp');
+  const cats = [...new Set(filas.map(r => (puntaje(r.pt) || {}).cat || '-'))].sort();
+  const punt = $('#t-punt');
+  punt.innerHTML = `<option value="">Todo puntaje</option>` + cats.map(c =>
+    `<option value="${c}">${c === '-' ? 'Sin puntaje' : 'Categoría ' + c}</option>`).join('');
+  punt.value = cats.includes(S.tf.punt) ? S.tf.punt : '';
+  S.tf.punt = punt.value;
+}
+
+// Se puede elegir si tiene mail y no está ya en la pestaña destino
+const elegible = (r) => r.ok && !r.en.includes(S.pestana);
+
+function filtradasAts(){
+  const q = norm(S.tf.q);
+  const lista = S.ats.filas.filter(r =>
+    (S.tf.todos || !r.en.length) &&
+    (!q || norm(`${r.n} ${r.e} ${r.l} ${r.id}`).includes(q)) &&
+    (!S.tf.zona || r.z === S.tf.zona) &&
+    (!S.tf.puesto || r.p === S.tf.puesto) &&
+    (!S.tf.disp || r.d === S.tf.disp) &&
+    (!S.tf.punt || ((puntaje(r.pt) || {}).cat || '-') === S.tf.punt));
+  const num = (x) => Number(String(x).replace(/\D/g, '')) || 0;
+  const orden = {
+    nuevos: (a, b) => num(b.id) - num(a.id) || b.a - a.a,
+    puntaje: (a, b) => ((puntaje(b.pt) || {}).num || 0) - ((puntaje(a.pt) || {}).num || 0) || num(b.id) - num(a.id),
+    nombre: (a, b) => a.n.localeCompare(b.n, 'es') || a.a - b.a
+  }[S.tf.orden];
+  return lista.sort(orden);
+}
+
+function pintarAts(){
+  if (!S.ats) return;
+  const lista = filtradasAts();
+  const visibles = lista.slice(0, S.tlimite);
+  $('#t-filas').innerHTML = visibles.length
+    ? visibles.map(filaAtsHtml).join('')
+    : `<tr><td colspan="9" class="vacio"><b>No hay postulantes con estos filtros</b>${S.tf.todos ? 'Probá sacando alguno.' : 'Los que ya están en una pestaña de citaciones no se muestran: marcá "Ver también…" para verlos.'}</td></tr>`;
+
+  const ocultos = S.tf.todos ? 0 : S.ats.filas.filter(r => r.en.length).length;
+  $('#t-cuenta').textContent = lista.length
+    ? `Mostrando ${fmt(visibles.length)} de ${plural(lista.length, 'postulante', 'postulantes')}` + (S.tsel.size ? ` · ${fmt(S.tsel.size)} elegidos` : '')
+    : '';
+  const mas = $('#t-mas');
+  mas.hidden = lista.length <= S.tlimite;
+  mas.textContent = `Mostrar ${fmt(Math.min(POR_PAGINA, lista.length - S.tlimite))} más`;
+  $('#t-leido').textContent = `"${S.ats.hoja}" de ${S.ats.planilla} · ${plural(S.ats.filas.length, 'postulante', 'postulantes')}`
+    + (ocultos ? ` (${fmt(ocultos)} ya están en alguna pestaña de citaciones y no se muestran)` : '')
+    + ` · leído a las ${S.ats.leido}.`;
+
+  const elegibles = lista.filter(elegible);
+  const todas = $('#t-sel-todas');
+  const elegidas = elegibles.filter(r => S.tsel.has(r.a)).length;
+  todas.checked = elegibles.length > 0 && elegidas === elegibles.length;
+  todas.indeterminate = elegidas > 0 && elegidas < elegibles.length;
+  todas.title = `Elegir los ${fmt(elegibles.length)} filtrados que se pueden agregar`;
+  pintarAccionAts();
+}
+
+function filaAtsHtml(r){
+  const puede = elegible(r);
+  const sel = S.tsel.has(r.a);
+  const pt = puntaje(r.pt);
+  const disp = r.d ? r.d.split('|').map(x => x.trim()) : [];
+  let donde;
+  if (!r.ok) donde = '<span class="badge b-ambar">Sin mail: no se puede citar</span>';
+  else if (r.en.length) donde = `<span class="chips-mini">${r.en.map(p =>
+      `<span class="badge ${p === S.pestana ? 'b-gris' : 'b-ambar'}">${p === S.pestana ? 'Ya está en esta' : esc(p)}</span>`).join('')}${r.env ? '<span class="badge b-ok">Citado</span>' : ''}</span>`;
+  else donde = '<span class="tenue">—</span>';
+  return `<tr class="${sel ? 'sel' : ''}${puede ? '' : ' bloqueada'}" data-a="${r.a}">
+    <td class="c-check"><input type="checkbox" data-a="${r.a}" ${sel ? 'checked' : ''} ${puede ? '' : 'disabled'} aria-label="Elegir a ${esc(r.n || 'fila ' + r.a)}"></td>
+    <td><span class="nombre">${esc(r.n || 'Sin nombre')}</span><small>${esc(r.e || 'sin mail')}</small></td>
+    <td class="num">${esc(r.ed)}</td>
+    <td>${esc(r.z) || '<span class="tenue">—</span>'}${r.z && !r.zc ? ' <span class="warn" title="Zona no reconocida: no se va a poder citar">⚠</span>' : ''}<small>${esc(r.l)}</small></td>
+    <td>${esc(r.p)}</td>
+    <td>${disp.length ? `${esc(disp[0])}<small>${esc(disp.slice(1).join(' · '))}</small>` : '<span class="tenue">—</span>'}</td>
+    <td class="num">${pt ? `${pt.cat ? `<span class="pt pt-${esc(pt.cat)}">${esc(pt.cat)}</span> ` : ''}${esc(pt.num)}` : '<span class="tenue">—</span>'}</td>
+    <td class="num">${esc(r.id) || '<span class="tenue">—</span>'}</td>
+    <td>${donde}</td>
+  </tr>`;
+}
+
+function pintarAccionAts(){
+  const n = S.tsel.size;
+  $('#accion-ats').hidden = n === 0 || $('#v-ats').hidden;
+  if (!n) return;
+  $('#t-n').textContent = plural(n, 'elegido', 'elegidos');
+  $('#t-agregar').textContent = `Agregar ${fmt(n)} a ${S.pestana}`;
+  const fecha = $('#t-fecha').value, hora = $('#t-hora').value;
+  const elegidos = S.ats ? S.ats.filas.filter(r => S.tsel.has(r.a)) : [];
+  const enOtra = elegidos.filter(r => r.en.length).length;
+  const sinZona = elegidos.filter(r => !r.zc).length;
+  const notas = [];
+  notas.push(fecha && hora
+    ? `Entran con entrevista el ${fecha.split('-').reverse().join('/')} a las ${hora}: quedan listos para citar.`
+    : 'Sin fecha y hora entran como "Sin fecha"; se las asignás después en la bandeja.');
+  if (enOtra) notas.push(`${plural(enOtra, 'ya está', 'ya están')} en otra pestaña de citaciones.`);
+  if (sinZona) notas.push(`${plural(sinZona, 'tiene', 'tienen')} zona no reconocida: no se van a poder citar.`);
+  $('#t-nota').textContent = notas.join(' ');
+}
+
+/* ── eventos del ATS ───────────────────── */
+let tBuscarT = null;
+$('#t-q').addEventListener('input', (e) => {
+  clearTimeout(tBuscarT);
+  tBuscarT = setTimeout(() => { S.tf.q = e.target.value; S.tlimite = POR_PAGINA; pintarAts(); }, 160);
+});
+[['#t-zona','zona'],['#t-puesto','puesto'],['#t-punt','punt'],['#t-disp','disp'],['#t-orden','orden']].forEach(([id, clave]) => {
+  $(id).addEventListener('change', (e) => { S.tf[clave] = e.target.value; S.tlimite = POR_PAGINA; pintarAts(); });
+});
+$('#t-todos').addEventListener('change', (e) => { S.tf.todos = e.target.checked; S.tlimite = POR_PAGINA; pintarAts(); });
+$('#t-recargar').addEventListener('click', cargarAts);
+$('#t-mas').addEventListener('click', () => { S.tlimite += POR_PAGINA; pintarAts(); });
+$('#t-pestana').addEventListener('change', (e) => {
+  S.pestana = e.target.value;
+  $('#f-pestana').value = S.pestana;
+  // los que ya están en la nueva pestaña dejan de poder elegirse
+  S.ats.filas.forEach(r => { if (!elegible(r)) S.tsel.delete(r.a); });
+  pintarAts();
+  cargarBandeja();
+});
+$('#t-fecha').addEventListener('input', pintarAccionAts);
+$('#t-hora').addEventListener('input', pintarAccionAts);
+
+$('#t-filas').addEventListener('click', (e) => {
+  if (S.ocupado) return;
+  const tr = e.target.closest('tr[data-a]');
+  if (!tr) return;
+  const a = Number(tr.dataset.a);
+  const r = S.ats.filas.find(x => x.a === a);
+  if (!r || !elegible(r)) { e.preventDefault(); return; }
+  if (S.tsel.has(a)) S.tsel.delete(a); else S.tsel.add(a);
+  pintarAts();
+});
+$('#t-sel-todas').addEventListener('change', (e) => {
+  filtradasAts().filter(elegible).forEach(r => { if (e.target.checked) S.tsel.add(r.a); else S.tsel.delete(r.a); });
+  pintarAts();
+});
+$('#t-cancelar').addEventListener('click', () => { S.tsel.clear(); pintarAts(); });
+$('#t-agregar').addEventListener('click', agregarDelAts);
+
+async function agregarDelAts(){
+  const elegidos = S.ats.filas.filter(r => S.tsel.has(r.a));
+  if (!elegidos.length) return;
+  const fecha = $('#t-fecha').value, hora = $('#t-hora').value;
+  if (!!fecha !== !!hora){
+    toast('Para agregarlos con entrevista completá fecha y hora (o dejá las dos vacías).');
+    (fecha ? $('#t-hora') : $('#t-fecha')).focus();
+    return;
+  }
+  if (fecha && fecha < S.ini.hoy){
+    const ok = await confirmar('La fecha ya pasó',
+      `<p>Elegiste el ${esc(fecha.split('-').reverse().join('/'))}, que es anterior a hoy. ¿Agregarlos igual con esa fecha?</p>`, 'Agregar igual');
+    if (!ok) return;
+  }
+  const enOtra = elegidos.filter(r => r.en.length);
+  if (enOtra.length){
+    const ok = await confirmar('Algunos ya están en otra pestaña',
+      `<p>${plural(enOtra.length, 'postulante ya está', 'postulantes ya están')} en otra pestaña de citaciones. Si los agregás, pueden recibir dos citaciones.</p>
+       <ul>${enOtra.slice(0, 8).map(r => `<li>${esc(r.n)} · ${esc(r.en.join(', '))}</li>`).join('')}${enOtra.length > 8 ? '<li>…</li>' : ''}</ul>`,
+      'Agregar igual');
+    if (!ok) return;
+  }
+
+  ocupado(true);
+  let r = null;
+  try{
+    r = await servidor('appTraerAts', S.pestana, elegidos.map(x => ({ a:x.a, e:x.e })), fecha, hora);
+    const partes = [`${plural(r.agregadas, 'postulante agregado', 'postulantes agregados')} a "${r.pestana}"`];
+    if (r.yaEstaban) partes.push(`${fmt(r.yaEstaban)} ya estaban`);
+    if (r.sinMail) partes.push(`${fmt(r.sinMail)} sin mail`);
+    if (r.noEncontradas) partes.push(`${fmt(r.noEncontradas)} no se encontraron en el ATS`);
+    toast(partes.join(' · '));
+  }catch(e){
+    mostrarError(e, 'No se pudieron agregar');
+  }finally{
+    ocupado(false);
+  }
+  if (!r) return;
+
+  // Vuelve a la bandeja con los recién agregados a la vista y seleccionados
+  S.tsel.clear();
+  S.ats = null;
+  $('#t-fecha').value = '';
+  $('#t-hora').value = '';
+  S.f = { q:'', zona:'', puesto:'', punt:'', disp:'', st: r.agregadas ? 'sel' : '', orden:'planilla' };
+  $('#f-q').value = '';
+  $('#f-orden').value = 'planilla';
+  mostrarVista('bandeja');
+  await cargarBandeja(new Set(r.personas));
+}
+
+/* ════════════════════════════════════════
    CONFIRMADOS
    ════════════════════════════════════════ */
 async function cargarConfirmados(){
@@ -981,15 +1271,19 @@ $('#c-gmail').addEventListener('click', async () => {
 /* ════════════════════════════════════════
    NAVEGACIÓN
    ════════════════════════════════════════ */
+function mostrarVista(vista){
+  document.querySelectorAll('.nav button').forEach(x => x.setAttribute('aria-selected', String(x.dataset.vista === vista)));
+  $('#v-bandeja').hidden = vista !== 'bandeja';
+  $('#v-ats').hidden = vista !== 'ats';
+  $('#v-confirmados').hidden = vista !== 'confirmados';
+  pintarAccion();
+  pintarAccionAts();
+  if (vista === 'confirmados' && !S.conf) cargarConfirmados();
+  if (vista === 'ats' && !S.ats && S.ini) cargarAts();
+}
 document.querySelector('.nav').addEventListener('click', (e) => {
   const b = e.target.closest('button[data-vista]');
-  if (!b) return;
-  const vista = b.dataset.vista;
-  document.querySelectorAll('.nav button').forEach(x => x.setAttribute('aria-selected', String(x === b)));
-  $('#v-bandeja').hidden = vista !== 'bandeja';
-  $('#v-confirmados').hidden = vista !== 'confirmados';
-  $('#accion').hidden = vista !== 'bandeja' || S.sel.size === 0;
-  if (vista === 'confirmados' && !S.conf) cargarConfirmados();
+  if (b && !S.ocupado) mostrarVista(b.dataset.vista);
 });
 
 iniciar();
