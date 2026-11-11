@@ -20,6 +20,7 @@ Planilla "Confirmaciones"
 | `index.html` | El panel. Un solo archivo, sin build. |
 | `apps-script.gs` | El endpoint que publica la planilla como JSON. Corre en Drive, se versiona acá. |
 | `img/` | Banner y fotos de cada estado. |
+| `citaciones-app/` | App web de citaciones (Apps Script) sobre la planilla Citaciones Tortus. Ver su README. |
 
 ## Puesta en marcha
 
