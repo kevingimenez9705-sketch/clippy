@@ -235,6 +235,25 @@
   tbody tr.bloqueada{cursor:default;color:var(--tenue);}
   tbody tr.bloqueada:hover{background:none;}
   .chips-mini{display:flex;flex-wrap:wrap;gap:4px;}
+  .arriba{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;margin-bottom:12px;padding:10px 12px;border:1px solid var(--linea);border-radius:var(--r);background:var(--panel);}
+  .arriba .etq{font-size:13px;font-weight:600;color:var(--gris);}
+  .modos{display:inline-flex;border:1px solid var(--linea);border-radius:10px;overflow:hidden;margin-bottom:12px;flex-wrap:wrap;}
+  .modos button{font:inherit;font-size:13px;font-weight:600;cursor:pointer;border:0;background:#fff;color:var(--gris);padding:8px 14px;}
+  .modos button + button{border-left:1px solid var(--linea);}
+  .modos button[aria-pressed="true"]{background:var(--marino);color:#fff;}
+  .modos button:focus-visible{outline:2px solid var(--azul);outline-offset:-2px;}
+  .pasos{margin:0 0 10px;padding-left:20px;color:var(--gris);font-size:13px;}
+  .pasos b{color:var(--tinta);}
+  textarea{width:100%;font:13px/1.4 "JetBrains Mono",monospace;border:1px solid var(--linea);border-radius:9px;padding:10px;resize:vertical;color:var(--tinta);}
+  textarea:focus-visible{outline:2px solid var(--azul);outline-offset:1px;}
+  .fila-botones{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px;}
+  .fila-botones .estado-linea{margin:0;}
+  .form-mano{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px 14px;max-width:960px;}
+  .form-mano label{display:flex;flex-direction:column;gap:4px;font-size:12.5px;font-weight:600;color:var(--gris);}
+  .form-mano input,.form-mano select{font:inherit;font-size:14px;font-weight:400;color:var(--tinta);border:1px solid var(--linea);border-radius:9px;padding:8px 10px;min-height:38px;width:100%;}
+  .form-mano input:focus-visible,.form-mano select:focus-visible{outline:2px solid var(--azul);outline-offset:1px;}
+  .form-mano .acciones-form{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
+  .aviso-caja{background:var(--ambar-bg);color:var(--ambar);border-radius:10px;padding:10px 12px;font-size:13px;margin-bottom:12px;}
 
   @media (max-width:640px){
     .cabecera h1{font-size:22px;}
@@ -257,7 +276,7 @@
 
   <nav class="nav" role="tablist" aria-label="Secciones">
     <button type="button" role="tab" id="tab-bandeja" aria-controls="v-bandeja" aria-selected="true" data-vista="bandeja">Bandeja</button>
-    <button type="button" role="tab" id="tab-ats" aria-controls="v-ats" aria-selected="false" data-vista="ats">＋ Traer del ATS</button>
+    <button type="button" role="tab" id="tab-ats" aria-controls="v-ats" aria-selected="false" data-vista="ats">＋ Agregar postulantes</button>
     <button type="button" role="tab" id="tab-confirmados" aria-controls="v-confirmados" aria-selected="false" data-vista="confirmados">Confirmados</button>
   </nav>
 
@@ -309,8 +328,22 @@
 
   <!-- ══ TRAER DEL ATS ═════════════════════════════ -->
   <section id="v-ats" role="tabpanel" aria-labelledby="tab-ats" hidden>
-    <div class="filtros">
+    <div class="arriba">
       <label class="destino">Agregar a <select id="t-pestana" class="pestana-sel" aria-label="Pestaña de citaciones donde se agregan"></select></label>
+      <span class="etq">Entrevista (opcional)</span>
+      <input type="date" id="t-fecha" aria-label="Fecha de entrevista (opcional)">
+      <input type="time" id="t-hora" step="900" list="horarios" aria-label="Hora de entrevista (opcional)">
+      <span class="estado-linea" style="margin:0">Con fecha y hora entran listos para citar.</span>
+    </div>
+    <div class="modos" role="group" aria-label="Cómo agregar">
+      <button type="button" data-modo="buscar" aria-pressed="true">🔎 Buscar en el ATS</button>
+      <button type="button" data-modo="pegar" aria-pressed="false">📋 Pegar del ATS</button>
+      <button type="button" data-modo="mano" aria-pressed="false">✍️ Cargar a mano</button>
+    </div>
+
+    <!-- modo: buscar en el ATS -->
+    <div id="m-buscar">
+    <div class="filtros">
       <input id="t-q" class="buscar" type="search" placeholder="Buscar en el ATS: nombre, mail, localidad o Id" aria-label="Buscar en el ATS">
       <select id="t-zona" aria-label="Zona"></select>
       <select id="t-puesto" aria-label="Puesto"></select>
@@ -347,6 +380,43 @@
       <span id="t-cuenta"></span>
       <button type="button" class="btn chico" id="t-mas" hidden>Mostrar más</button>
     </div>
+    </div>
+
+    <!-- modo: pegar filas copiadas del ATS -->
+    <div id="m-pegar" hidden>
+      <ol class="pasos">
+        <li>En la planilla del ATS (pestaña <b>ATS - Postulaciones</b>) seleccioná las filas que querés, columnas <b>A a I</b> (de Id a Puntaje), y copialas con <b>Ctrl+C</b>.</li>
+        <li>Pegalas acá abajo con <b>Ctrl+V</b>. Si copiás también la fila de encabezados, mejor: así se reconocen las columnas aunque estén en otro orden.</li>
+      </ol>
+      <textarea id="p-texto" rows="7" placeholder="Pegá acá las filas copiadas del ATS…" aria-label="Filas copiadas del ATS"></textarea>
+      <div id="p-vista"></div>
+      <div class="fila-botones">
+        <button type="button" class="btn primario" id="p-agregar" disabled>Agregar</button>
+        <button type="button" class="btn" id="p-limpiar">Limpiar</button>
+        <span class="estado-linea" id="p-resumen"></span>
+      </div>
+    </div>
+
+    <!-- modo: una persona a mano -->
+    <form id="m-mano" class="form-mano" hidden autocomplete="off">
+      <label>Nombre y apellido *<input id="h-nombre" required maxlength="120"></label>
+      <label>Mail *<input id="h-email" type="email" required maxlength="160"></label>
+      <label>Zona *<select id="h-zona" required></select></label>
+      <label>Localidad<input id="h-localidad" maxlength="80"></label>
+      <label>Puesto *<input id="h-puesto" list="l-puestos" required maxlength="80"></label>
+      <label>Edad<input id="h-edad" type="number" min="14" max="99" inputmode="numeric"></label>
+      <label>Disponibilidad<input id="h-disp" list="l-disp" placeholder="si | full-time" maxlength="60"></label>
+      <label>Puntaje<input id="h-puntaje" list="l-puntaje" placeholder="150 | B - Considerar" maxlength="60"></label>
+      <label>Id del ATS (si tiene)<input id="h-id" inputmode="numeric" maxlength="12"></label>
+      <div class="acciones-form">
+        <button type="submit" class="btn primario" id="h-agregar">Agregar</button>
+        <button type="button" class="btn" id="h-ver" hidden>Ver en la bandeja</button>
+        <span class="estado-linea" style="margin:0">Sin Id también se cita y se sigue por mail.</span>
+      </div>
+      <datalist id="l-puestos"></datalist>
+      <datalist id="l-disp"></datalist>
+      <datalist id="l-puntaje"></datalist>
+    </form>
   </section>
 
   <!-- ══ CONFIRMADOS ══════════════════════════════ -->
@@ -385,9 +455,6 @@
 <div class="accion" id="accion-ats" hidden>
   <span class="n" id="t-n"></span>
   <span class="sep"></span>
-  <span class="etq">Entrevista (opcional)</span>
-  <input type="date" id="t-fecha" aria-label="Fecha de entrevista (opcional)">
-  <input type="time" id="t-hora" step="900" list="horarios" aria-label="Hora de entrevista (opcional)">
   <button type="button" class="btn primario" id="t-agregar">Agregar</button>
   <button type="button" class="btn" id="t-cancelar">Cancelar</button>
   <span class="nota" id="t-nota"></span>
@@ -517,12 +584,15 @@ const S = {
   tf: { q:'', zona:'', puesto:'', punt:'', disp:'', orden:'nuevos', todos:false },
   tsel: new Set(),         // filas del ATS elegidas
   tlimite: POR_PAGINA,
+  modo: 'buscar',          // buscar | pegar | mano
+  pegadas: [],             // filas pegadas, ya revisadas
+  mano: [],                // personas cargadas a mano en esta tanda ("mail|nombre")
   ocupado: false
 };
 
 function ocupado(si){
   S.ocupado = si;
-  document.querySelectorAll('button.btn, .accion input, .filtros select, .filtros input').forEach(el => {
+  document.querySelectorAll('button.btn, .accion input, .filtros select, .filtros input, .arriba select, .arriba input, textarea, .form-mano input, .form-mano select').forEach(el => {
     if (si) { el.dataset.antes = el.disabled ? '1' : ''; el.disabled = true; }
     else if (el.dataset.antes !== undefined) { el.disabled = el.dataset.antes === '1'; delete el.dataset.antes; }
   });
@@ -864,7 +934,7 @@ async function enviar(claves){
     for (let i = 0; i < claves.length; i += LOTE_CITAR){
       progreso(i);
       const lote = claves.slice(i, i + LOTE_CITAR);
-      const r = await servidor('citar', S.pestana, '', lote);
+      const r = await servidor('appCitar', S.pestana, lote);
       total.enviados += r.enviados;
       total.errores += r.errores;
       total.salteados += r.salteados;
@@ -901,7 +971,7 @@ async function limpiarEnviadas(){
 
   ocupado(true);
   try{
-    const r = await servidor('eliminarEnviadas', S.pestana);
+    const r = await servidor('appEliminarEnviadas', S.pestana);
     toast(`Se eliminaron ${plural(r.eliminadas, 'fila', 'filas')} de "${r.pestana}".`);
   }catch(e){
     mostrarError(e, 'No se pudo limpiar');
@@ -925,7 +995,7 @@ async function cargarAts(){
     pintarAts();
   }catch(e){
     S.ats = null;
-    $('#t-filas').innerHTML = `<tr><td colspan="9" class="vacio"><b>No se pudo leer el ATS</b>${esc(mensajeDe(e))}</td></tr>`;
+    sinAts(mensajeDe(e));
   }
 }
 
@@ -1023,7 +1093,7 @@ function filaAtsHtml(r){
 
 function pintarAccionAts(){
   const n = S.tsel.size;
-  $('#accion-ats').hidden = n === 0 || $('#v-ats').hidden;
+  $('#accion-ats').hidden = n === 0 || $('#v-ats').hidden || S.modo !== 'buscar';
   if (!n) return;
   $('#t-n').textContent = plural(n, 'elegido', 'elegidos');
   $('#t-agregar').textContent = `Agregar ${fmt(n)} a ${S.pestana}`;
@@ -1056,9 +1126,12 @@ $('#t-pestana').addEventListener('change', (e) => {
   S.pestana = e.target.value;
   $('#f-pestana').value = S.pestana;
   // los que ya están en la nueva pestaña dejan de poder elegirse
-  S.ats.filas.forEach(r => { if (!elegible(r)) S.tsel.delete(r.a); });
-  pintarAts();
-  cargarBandeja();
+  if (S.ats){
+    S.ats.filas.forEach(r => { if (!elegible(r)) S.tsel.delete(r.a); });
+    pintarAts();
+  }
+  S.mano = [];
+  cargarBandeja().then(() => { if (S.modo === 'pegar') revisarPegado(); if (S.modo === 'mano') armarFormMano(); });
 });
 $('#t-fecha').addEventListener('input', pintarAccionAts);
 $('#t-hora').addEventListener('input', pintarAccionAts);
@@ -1080,20 +1153,50 @@ $('#t-sel-todas').addEventListener('change', (e) => {
 $('#t-cancelar').addEventListener('click', () => { S.tsel.clear(); pintarAts(); });
 $('#t-agregar').addEventListener('click', agregarDelAts);
 
-async function agregarDelAts(){
-  const elegidos = S.ats.filas.filter(r => S.tsel.has(r.a));
-  if (!elegidos.length) return;
+// Fecha y hora de arriba: las dos o ninguna. Devuelve null si hay que frenar.
+async function entrevistaElegida(){
   const fecha = $('#t-fecha').value, hora = $('#t-hora').value;
   if (!!fecha !== !!hora){
     toast('Para agregarlos con entrevista completá fecha y hora (o dejá las dos vacías).');
     (fecha ? $('#t-hora') : $('#t-fecha')).focus();
-    return;
+    return null;
   }
   if (fecha && fecha < S.ini.hoy){
     const ok = await confirmar('La fecha ya pasó',
       `<p>Elegiste el ${esc(fecha.split('-').reverse().join('/'))}, que es anterior a hoy. ¿Agregarlos igual con esa fecha?</p>`, 'Agregar igual');
-    if (!ok) return;
+    if (!ok) return null;
   }
+  return { fecha, hora };
+}
+
+function avisoAgregados(r, extra){
+  const partes = [`${plural(r.agregadas, 'postulante agregado', 'postulantes agregados')} a "${r.pestana}"`];
+  if (r.yaEstaban) partes.push(`${fmt(r.yaEstaban)} ya estaban`);
+  if (r.sinMail) partes.push(`${fmt(r.sinMail)} sin mail válido`);
+  if (r.noEncontradas) partes.push(`${fmt(r.noEncontradas)} no se encontraron en el ATS`);
+  if (extra) partes.push(extra);
+  toast(partes.join(' · '));
+}
+
+// Vuelve a la bandeja con los recién agregados a la vista y seleccionados
+async function irABandejaCon(personas){
+  S.tsel.clear();
+  S.ats = null;
+  $('#t-fecha').value = '';
+  $('#t-hora').value = '';
+  S.f = { q:'', zona:'', puesto:'', punt:'', disp:'', st: personas.length ? 'sel' : '', orden:'planilla' };
+  $('#f-q').value = '';
+  $('#f-orden').value = 'planilla';
+  mostrarVista('bandeja');
+  await cargarBandeja(new Set(personas));
+}
+
+async function agregarDelAts(){
+  const elegidos = S.ats.filas.filter(r => S.tsel.has(r.a));
+  if (!elegidos.length) return;
+  const ent = await entrevistaElegida();
+  if (!ent) return;
+  const { fecha, hora } = ent;
   const enOtra = elegidos.filter(r => r.en.length);
   if (enOtra.length){
     const ok = await confirmar('Algunos ya están en otra pestaña',
@@ -1107,29 +1210,210 @@ async function agregarDelAts(){
   let r = null;
   try{
     r = await servidor('appTraerAts', S.pestana, elegidos.map(x => ({ a:x.a, e:x.e })), fecha, hora);
-    const partes = [`${plural(r.agregadas, 'postulante agregado', 'postulantes agregados')} a "${r.pestana}"`];
-    if (r.yaEstaban) partes.push(`${fmt(r.yaEstaban)} ya estaban`);
-    if (r.sinMail) partes.push(`${fmt(r.sinMail)} sin mail`);
-    if (r.noEncontradas) partes.push(`${fmt(r.noEncontradas)} no se encontraron en el ATS`);
-    toast(partes.join(' · '));
+    avisoAgregados(r);
+  }catch(e){
+    mostrarError(e, 'No se pudieron agregar');
+  }finally{
+    ocupado(false);
+  }
+  if (r) await irABandejaCon(r.personas);
+}
+
+/* ── modos de "Agregar postulantes" ───── */
+function entrarAgregar(){
+  if (!S.ini.ats && S.modo === 'buscar' && !S.ats) S.modo = 'pegar';   // sin ATS configurado arranca en "Pegar"
+  ponerModo(S.modo);
+}
+
+function ponerModo(modo){
+  S.modo = modo;
+  document.querySelectorAll('.modos button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.modo === modo)));
+  $('#m-buscar').hidden = modo !== 'buscar';
+  $('#m-pegar').hidden = modo !== 'pegar';
+  $('#m-mano').hidden = modo !== 'mano';
+  if (modo === 'buscar' && !S.ats) cargarAts();
+  if (modo === 'pegar') revisarPegado();
+  if (modo === 'mano') armarFormMano();
+  pintarAccionAts();
+}
+document.querySelector('.modos').addEventListener('click', (e) => {
+  const b = e.target.closest('button[data-modo]');
+  if (b && !S.ocupado) ponerModo(b.dataset.modo);
+});
+
+// Si el ATS no se puede leer, ofrecer la carga manual
+function sinAts(mensaje){
+  $('#t-filas').innerHTML = `<tr><td colspan="9" class="vacio"><b>No se pudo leer el ATS</b>${esc(mensaje)}
+    <div class="fila-botones" style="justify-content:center">
+      <button type="button" class="btn primario" data-ir-modo="pegar">📋 Pegar del ATS</button>
+      <button type="button" class="btn" data-ir-modo="mano">✍️ Cargar a mano</button>
+    </div></td></tr>`;
+}
+$('#t-filas').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-ir-modo]');
+  if (b) { e.stopPropagation(); ponerModo(b.dataset.irModo); }
+}, true);
+
+// Zona reconocida, con la misma regla que el menú (CABA, Norte, Sur, Oeste o "Capital")
+function zonaReconocida(texto){
+  const t = ' ' + norm(texto).replace(/\./g, '').replace(/[^a-z0-9]+/g, ' ').trim() + ' ';
+  if (!t.trim()) return '';
+  const z = Object.keys(S.ini.zonas).find(z => t.includes(' ' + norm(z) + ' '));
+  return z || (t.includes(' capital ') && S.ini.zonas.CABA ? 'CABA' : '');
+}
+const mailOk = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(e || '').trim());
+const mailsDeLaPestana = () => new Set(S.filas.map(r => r.e.toLowerCase()).filter(Boolean));
+
+/* ── pegar filas del ATS ───────────────── */
+// Columnas A a I del ATS: Id, Nombre, Edad, Email, Zona, Localidad, Puesto, Disp., Puntaje
+const ORDEN_ATS = ['id','nombre','edad','email','zona','localidad','puesto','disp','puntaje'];
+
+function leerPegado(texto){
+  let filas = String(texto || '').split(/\r?\n/).filter(l => l.trim()).map(l => l.split('\t'));
+  if (!filas.length) return [];
+  const cab = filas[0].map(norm);
+  let idx = {};
+  if (cab.some(c => ['email','mail','e-mail','correo','correo electronico'].includes(c))){
+    const pos = (pred) => cab.findIndex(pred);
+    idx = {
+      id: pos(c => c === 'id'),
+      nombre: pos(c => ['nombre','nombre y apellido','apellido y nombre','postulante'].includes(c)),
+      edad: pos(c => c === 'edad'),
+      email: pos(c => ['email','mail','e-mail','correo','correo electronico'].includes(c)),
+      zona: pos(c => c === 'zona'),
+      localidad: pos(c => c === 'localidad'),
+      puesto: pos(c => c === 'puesto'),
+      disp: pos(c => c.startsWith('disp')),
+      puntaje: pos(c => c.startsWith('puntaje'))
+    };
+    filas = filas.slice(1);
+  } else {
+    ORDEN_ATS.forEach((campo, i) => { idx[campo] = i; });
+  }
+  return filas.map(c => {
+    const p = {};
+    ORDEN_ATS.forEach(campo => { p[campo] = idx[campo] >= 0 ? String(c[idx[campo]] || '').trim() : ''; });
+    return p;
+  });
+}
+
+function revisarPegado(){
+  const filas = leerPegado($('#p-texto').value);
+  const enPestana = mailsDeLaPestana();
+  const vistos = new Set();
+  S.pegadas = filas.map(p => {
+    const e = p.email.toLowerCase();
+    let estado = 'ok';
+    if (!mailOk(p.email)) estado = 'sinmail';
+    else if (enPestana.has(e)) estado = 'yaesta';
+    else if (vistos.has(e)) estado = 'repetido';
+    vistos.add(e);
+    return { ...p, estado, zc: zonaReconocida(p.zona) };
+  });
+
+  const van = S.pegadas.filter(p => p.estado === 'ok');
+  const TXT = {
+    ok: '<span class="badge b-listo">Se agrega</span>',
+    sinmail: '<span class="badge b-ambar">Sin mail válido</span>',
+    yaesta: '<span class="badge b-gris">Ya está en la pestaña</span>',
+    repetido: '<span class="badge b-gris">Repetido</span>'
+  };
+  const malas = S.pegadas.filter(p => p.estado === 'sinmail').length;
+  $('#p-vista').innerHTML = S.pegadas.length ? `
+    ${malas === S.pegadas.length ? `<p class="aviso-caja">No encuentro mails en lo que pegaste. Copiá las columnas <b>A a I</b> del ATS (de Id a Puntaje), o incluí la fila de encabezados.</p>` : ''}
+    <div class="tabla-caja" style="margin-top:10px;max-height:340px">
+      <table><thead><tr><th>Postulante</th><th>Zona</th><th>Puesto</th><th>Puntaje</th><th>Id</th><th></th></tr></thead>
+      <tbody>${S.pegadas.map(p => `<tr class="${p.estado === 'ok' ? '' : 'bloqueada'}">
+        <td><span class="nombre">${esc(p.nombre || 'Sin nombre')}</span><small>${esc(p.email || 'sin mail')}</small></td>
+        <td>${esc(p.zona) || '<span class="tenue">—</span>'}${p.zona && !p.zc ? ' <span class="warn" title="Zona no reconocida: no se va a poder citar">⚠</span>' : ''}<small>${esc(p.localidad)}</small></td>
+        <td>${esc(p.puesto)}</td><td class="num">${esc(p.puntaje)}</td><td class="num">${esc(p.id)}</td>
+        <td>${TXT[p.estado]}</td></tr>`).join('')}</tbody></table>
+    </div>` : '';
+  $('#p-resumen').textContent = S.pegadas.length
+    ? `${plural(van.length, 'se agrega', 'se agregan')}` + (S.pegadas.length - van.length ? ` · ${fmt(S.pegadas.length - van.length)} se saltean` : '') + ` a "${S.pestana}".`
+    : '';
+  const b = $('#p-agregar');
+  b.textContent = van.length ? `Agregar ${fmt(van.length)} a ${S.pestana}` : 'Agregar';
+  if (!S.ocupado) b.disabled = !van.length;
+}
+
+let pegarT = null;
+$('#p-texto').addEventListener('input', () => { clearTimeout(pegarT); pegarT = setTimeout(revisarPegado, 200); });
+$('#p-limpiar').addEventListener('click', () => { $('#p-texto').value = ''; revisarPegado(); $('#p-texto').focus(); });
+$('#p-agregar').addEventListener('click', async () => {
+  const van = S.pegadas.filter(p => p.estado === 'ok');
+  if (!van.length) return;
+  const ent = await entrevistaElegida();
+  if (!ent) return;
+  ocupado(true);
+  let r = null;
+  try{
+    r = await servidor('appAgregarManual', S.pestana, van.map(({ estado, zc, ...p }) => p), ent.fecha, ent.hora);
+    avisoAgregados(r);
   }catch(e){
     mostrarError(e, 'No se pudieron agregar');
   }finally{
     ocupado(false);
   }
   if (!r) return;
+  $('#p-texto').value = '';
+  S.pegadas = [];
+  $('#p-vista').innerHTML = '';
+  $('#p-resumen').textContent = '';
+  await irABandejaCon(r.personas);
+});
 
-  // Vuelve a la bandeja con los recién agregados a la vista y seleccionados
-  S.tsel.clear();
-  S.ats = null;
-  $('#t-fecha').value = '';
-  $('#t-hora').value = '';
-  S.f = { q:'', zona:'', puesto:'', punt:'', disp:'', st: r.agregadas ? 'sel' : '', orden:'planilla' };
-  $('#f-q').value = '';
-  $('#f-orden').value = 'planilla';
-  mostrarVista('bandeja');
-  await cargarBandeja(new Set(r.personas));
+/* ── cargar a mano ─────────────────────── */
+function armarFormMano(){
+  const zona = $('#h-zona');
+  if (!zona.options.length){
+    zona.innerHTML = `<option value="">Elegí…</option>` + Object.keys(S.ini.zonas)
+      .map(z => `<option value="${esc(z)}">${esc(z)} → ${esc(S.ini.zonas[z])}</option>`).join('');
+  }
+  const distintos = (campo) => [...new Set(S.filas.map(r => r[campo]).filter(Boolean))].sort((a,b) => a.localeCompare(b, 'es'));
+  $('#l-puestos').innerHTML = distintos('p').map(v => `<option value="${esc(v)}">`).join('');
+  $('#l-disp').innerHTML = distintos('d').map(v => `<option value="${esc(v)}">`).join('');
+  $('#l-puntaje').innerHTML = ['A - Prioritario','B - Considerar','C - Guardar'].map(v => `<option value="${esc(v)}">`).join('');
+  $('#h-agregar').textContent = `Agregar a ${S.pestana}`;
+  const ver = $('#h-ver');
+  ver.hidden = !S.mano.length;
+  ver.textContent = `Ver ${plural(S.mano.length, 'agregado', 'agregados')} en la bandeja`;
 }
+
+$('#m-mano').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const v = (id) => $(id).value.trim();
+  const p = { id:v('#h-id'), nombre:v('#h-nombre'), edad:v('#h-edad'), email:v('#h-email'), zona:v('#h-zona'),
+              localidad:v('#h-localidad'), puesto:v('#h-puesto'), disp:v('#h-disp'), puntaje:v('#h-puntaje') };
+  if (!p.nombre || !p.zona || !p.puesto){ toast('Completá nombre, mail, zona y puesto.'); return; }
+  if (!mailOk(p.email)){ toast('Revisá el mail.'); $('#h-email').focus(); return; }
+  if (mailsDeLaPestana().has(p.email.toLowerCase())){ toast(`Ese mail ya está en "${S.pestana}".`); $('#h-email').focus(); return; }
+  const ent = await entrevistaElegida();
+  if (!ent) return;
+
+  ocupado(true);
+  let r = null;
+  try{
+    r = await servidor('appAgregarManual', S.pestana, [p], ent.fecha, ent.hora);
+    avisoAgregados(r, r.agregadas ? 'Podés cargar otro.' : '');
+  }catch(err){
+    mostrarError(err, 'No se pudo agregar');
+  }finally{
+    ocupado(false);
+  }
+  if (!r || !r.agregadas) return;
+  S.mano.push(...r.personas);
+  // Se vacían los datos de la persona; zona, puesto y entrevista quedan para cargar el siguiente
+  ['#h-id','#h-nombre','#h-edad','#h-email','#h-localidad','#h-puntaje'].forEach(id => { $(id).value = ''; });
+  $('#h-nombre').focus();
+  await cargarBandeja(new Set(S.mano));   // la bandeja (oculta) ya los tiene, y el control de repetidos también
+  armarFormMano();
+});
+$('#h-ver').addEventListener('click', async () => {
+  const personas = S.mano.slice();
+  S.mano = [];
+  await irABandejaCon(personas);
+});
 
 /* ════════════════════════════════════════
    CONFIRMADOS
@@ -1235,7 +1519,7 @@ $('#c-recopilar').addEventListener('click', async () => {
   ocupado(true);
   toast('Leyendo tu casilla… puede tardar un minuto.');
   try{
-    const r = await servidor('recopilar');
+    const r = await servidor('appRecopilar');
     const sedes = Object.keys(r.porSede || {});
     abrirModal(`<h2>Recopilación terminada</h2>
       <p>Casilla: <b>${esc(r.casilla)}</b></p>
@@ -1259,7 +1543,7 @@ $('#c-gmail').addEventListener('click', async () => {
   if (!ok) return;
   ocupado(true);
   try{
-    const r = await servidor('organizarGmail');
+    const r = await servidor('appOrganizarGmail');
     toast(`${plural(r.total, 'conversación organizada', 'conversaciones organizadas')} en ${r.casilla}.`);
   }catch(e){
     mostrarError(e, 'No se pudo organizar Gmail');
@@ -1279,7 +1563,7 @@ function mostrarVista(vista){
   pintarAccion();
   pintarAccionAts();
   if (vista === 'confirmados' && !S.conf) cargarConfirmados();
-  if (vista === 'ats' && !S.ats && S.ini) cargarAts();
+  if (vista === 'ats' && S.ini) entrarAgregar();
 }
 document.querySelector('.nav').addEventListener('click', (e) => {
   const b = e.target.closest('button[data-vista]');
