@@ -29,6 +29,13 @@
 
     --r:12px;
     --sombra:0 1px 3px rgba(22,41,92,.08);
+
+    /* escala de ocupación (la misma del panel Clippy) */
+    --frio:#2f80ed;
+    --tibio:#e39a1c;
+    --vivo:#2e9b57;
+    --lleno:#dd3b27;
+    --panel-c:#f1f3f8;
   }
 
   *{box-sizing:border-box;}
@@ -176,28 +183,111 @@
   .accion .btn.citar{background:var(--cian);border-color:var(--cian);color:#0f1c40;}
 
   /* ── confirmados ──────────────────────────── */
-  .resumen{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px;margin-bottom:16px;}
-  .dato{border:1px solid var(--linea);border-radius:var(--r);padding:12px 14px;background:#fff;box-shadow:var(--sombra);}
-  .dato .cifra{font-family:"Space Grotesk",system-ui,sans-serif;font-size:26px;font-weight:700;color:var(--marino);line-height:1.1;}
-  .dato .titulo{font-weight:600;font-size:13px;}
-  .dato .sub{font-size:12px;color:var(--gris);}
-  .dato.alerta .cifra{color:var(--ambar);}
+  /* ── confirmados: mismo estilo que el panel Clippy ── */
+  .resumen{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:14px;margin:4px 0 0;}
+  .tarjeta-dato{
+    background:var(--panel-c);border:1px solid var(--linea);border-radius:10px;
+    padding:14px 17px 14px 20px;display:flex;align-items:center;gap:13px;
+    position:relative;overflow:hidden;
+    transition:transform .25s ease,box-shadow .25s ease;animation:aparecer .5s ease both;
+  }
+  .tarjeta-dato::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(#3f8ae0,var(--cian));}
+  .tarjeta-dato:hover{transform:translateY(-3px);box-shadow:0 14px 26px -16px rgba(22,41,92,.22);}
+  .tarjeta-dato .cifra{font-family:"Space Grotesk",system-ui,sans-serif;font-size:27px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums;white-space:nowrap;}
+  .tarjeta-dato .titulo{font-weight:600;font-size:14.5px;margin:0;}
+  .tarjeta-dato .sub{margin:0;font-size:12.5px;color:var(--gris);}
+  .tarjeta-dato.alerta{background:#fdf0ee;border-color:#f6d2cb;}
+  .tarjeta-dato.alerta::before{background:linear-gradient(var(--lleno),#ff9a6b);}
+  .tarjeta-dato.alerta .cifra{color:var(--lleno);}
+  .tarjeta-dato.margen{background:#eef4fd;border-color:#cfe0f7;}
+  .tarjeta-dato.margen::before{background:linear-gradient(var(--frio),var(--cian));}
+  .tarjeta-dato.margen .cifra{color:var(--frio);}
+  .tarjeta-dato.proximo{background:linear-gradient(120deg,#0f1c40 0%,var(--marino) 45%,#2f63ad 100%);border-color:transparent;color:#fff;}
+  .tarjeta-dato.proximo::before{background:linear-gradient(var(--cian),#8fb8ff);}
+  .tarjeta-dato.proximo .sub{color:#c3d1e8;}
 
-  .dia{margin:20px 0 8px;font-family:"Space Grotesk",system-ui,sans-serif;font-size:18px;display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline;}
-  .dia small{font-family:"Poppins",system-ui,sans-serif;font-size:12.5px;color:var(--gris);font-weight:500;}
-  .slots{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px;}
-  .slot{border:1px solid var(--linea);border-radius:var(--r);background:#fff;padding:12px 14px;}
-  .slot .cab{display:flex;align-items:baseline;gap:10px;}
-  .slot .hora{font-family:"JetBrains Mono",monospace;font-size:18px;font-weight:600;color:var(--marino);}
-  .slot .sede{font-weight:600;}
-  .slot .cant{margin-left:auto;font-weight:700;font-size:18px;}
-  .slot .cant small{font-size:12px;color:var(--gris);font-weight:500;}
-  .slot details{margin-top:6px;}
-  .slot summary{cursor:pointer;color:var(--azul);font-size:12.5px;font-weight:600;}
-  .slot ol{margin:8px 0 0;padding-left:20px;font-size:12.5px;}
-  .slot li{margin-bottom:5px;}
-  .slot li small{display:block;color:var(--gris);font-size:11.5px;}
-  .slot .dup{color:var(--ambar);font-weight:600;}
+  .salas{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 0;}
+  .sala-chip{
+    font-family:"Poppins",system-ui,sans-serif;font-size:13.5px;font-weight:600;color:var(--marino);
+    background:var(--panel-c);border:1px solid var(--linea);border-radius:99px;padding:7px 16px;cursor:pointer;
+    transition:background .2s ease,color .2s ease,border-color .2s ease;
+  }
+  .sala-chip:hover{border-color:#3f8ae0;}
+  .sala-chip[aria-pressed="true"]{background:var(--marino);border-color:var(--marino);color:#fff;}
+  .sala-chip:focus-visible{outline:2px solid var(--azul);outline-offset:2px;}
+
+  .titulo-seccion{
+    font-family:"Space Grotesk",system-ui,sans-serif;font-size:16px;font-weight:600;
+    margin:30px 0 13px;padding-bottom:9px;border-bottom:1px solid var(--linea);
+    display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;
+  }
+  .titulo-seccion .cuando{font-family:"Poppins",system-ui,sans-serif;font-size:13px;font-weight:500;color:var(--gris);}
+
+  .grilla{display:grid;grid-template-columns:repeat(auto-fill,minmax(248px,1fr));gap:16px;}
+  .turno{
+    background:var(--blanco);border:1px solid var(--linea);border-top:3px solid var(--gris);border-radius:10px;
+    padding:17px 19px 19px;box-shadow:var(--sombra);text-align:center;overflow:hidden;
+    transition:transform .25s ease,box-shadow .25s ease;animation:aparecer .5s ease both;
+  }
+  .turno:hover{transform:translateY(-5px);}
+  .foto{
+    width:calc(100% + 38px);aspect-ratio:1/1;margin:-17px -19px 14px;background:#eceff4;
+    position:relative;display:flex;align-items:flex-end;justify-content:flex-end;
+  }
+  .foto img{width:100%;height:100%;object-fit:cover;display:block;position:absolute;inset:0;}
+  .foto .emoji{display:none;position:relative;z-index:1;font-size:22px;margin:0 11px 9px 0;text-shadow:0 1px 4px rgba(0,0,0,.45);}
+  .foto.sin-foto{background:linear-gradient(135deg,currentColor 0%,#dfe4ee 150%);}
+  .foto.sin-foto img{display:none;}
+  .foto.sin-foto .emoji{display:flex;align-items:center;justify-content:center;position:absolute;inset:0;margin:0;font-size:34px;}
+  .turno .hora{font-family:"Space Grotesk",system-ui,sans-serif;font-size:29px;font-weight:700;margin:0;line-height:1.1;font-variant-numeric:tabular-nums;}
+  .turno .fecha{margin:1px 0 12px;font-size:12.5px;color:var(--gris);font-weight:500;}
+  .turno .personas{font-size:15px;margin:0 0 3px;font-weight:500;}
+  .turno .personas b{font-family:"Space Grotesk",system-ui,sans-serif;font-size:22px;font-weight:700;}
+  .turno .apodo{font-style:italic;font-weight:600;font-size:14px;margin:0 0 13px;}
+  .medidor{height:7px;background:#eceff4;border-radius:99px;overflow:hidden;}
+  .medidor span{display:block;height:100%;width:0;border-radius:99px;transition:width .65s cubic-bezier(.22,.61,.36,1);}
+  .turno .ocupacion{margin:8px 0 0;font-family:"JetBrains Mono",monospace;font-size:12px;color:var(--gris);font-variant-numeric:tabular-nums;}
+  .turno.pasado{opacity:.45;}
+  .turno details{margin-top:12px;padding-top:10px;border-top:1px solid var(--linea);text-align:left;}
+  .turno summary{cursor:pointer;text-align:center;font-size:12.5px;font-weight:600;color:var(--marino);}
+  .turno ol{margin:8px 0 0;padding-left:20px;font-size:12.5px;}
+  .turno li{margin-bottom:5px;}
+  .turno li small{display:block;color:var(--gris);font-size:11.5px;}
+  .turno .dup{color:var(--lleno);font-weight:600;}
+
+  .t-frio{border-top-color:var(--frio);box-shadow:var(--sombra),0 0 28px -8px rgba(47,128,237,.55);}
+  .t-frio .hora,.t-frio .apodo{color:var(--frio);}
+  .t-frio .foto{color:var(--frio);}
+  .t-frio .medidor span{background:linear-gradient(90deg,var(--frio),#7dd3fc);box-shadow:0 0 10px var(--frio);}
+  .t-frio:hover{box-shadow:var(--sombra),0 0 46px -6px rgba(47,128,237,.75);}
+  .t-tibio{border-top-color:var(--tibio);box-shadow:var(--sombra),0 0 28px -8px rgba(227,154,28,.55);}
+  .t-tibio .hora,.t-tibio .apodo{color:var(--tibio);}
+  .t-tibio .foto{color:var(--tibio);}
+  .t-tibio .medidor span{background:linear-gradient(90deg,var(--tibio),#fde68a);box-shadow:0 0 10px var(--tibio);}
+  .t-tibio:hover{box-shadow:var(--sombra),0 0 46px -6px rgba(227,154,28,.75);}
+  .t-vivo{border-top-color:var(--vivo);box-shadow:var(--sombra),0 0 28px -8px rgba(46,155,87,.55);}
+  .t-vivo .hora,.t-vivo .apodo{color:var(--vivo);}
+  .t-vivo .foto{color:var(--vivo);}
+  .t-vivo .medidor span{background:linear-gradient(90deg,var(--vivo),#6ee7b7);box-shadow:0 0 10px var(--vivo);}
+  .t-vivo:hover{box-shadow:var(--sombra),0 0 46px -6px rgba(46,155,87,.75);}
+  .t-lleno{border-top-color:var(--lleno);animation:aparecer .5s ease both,alerta 2.2s ease-in-out .5s infinite;}
+  .t-lleno .hora,.t-lleno .apodo{color:var(--lleno);}
+  .t-lleno .foto{color:var(--lleno);}
+  .t-lleno .medidor span{background:linear-gradient(90deg,var(--lleno),#ff9a6b);box-shadow:0 0 10px var(--lleno);}
+  .t-lleno:hover{box-shadow:var(--sombra),0 0 56px -4px rgba(221,59,39,.9);}
+  @keyframes alerta{
+    0%,100%{box-shadow:var(--sombra),0 0 26px -8px rgba(221,59,39,.5);}
+    50%{box-shadow:var(--sombra),0 0 48px -6px rgba(221,59,39,.85);}
+  }
+  @keyframes aparecer{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:none;}}
+
+  .pie{margin:13px 0 0;font-size:12.5px;color:var(--gris);}
+  .referencia{display:flex;flex-wrap:wrap;gap:9px 22px;margin:30px 0 0;padding-top:17px;border-top:1px solid var(--linea);font-size:13px;color:var(--gris);}
+  .referencia span{display:flex;align-items:center;gap:7px;}
+  .referencia .punto{width:9px;height:9px;}
+  .sin-fecha-lista summary{cursor:pointer;font-weight:600;color:var(--marino);font-size:13px;}
+  .sin-fecha-lista .tabla-caja{margin-top:10px;max-height:360px;}
+  @media (prefers-reduced-motion:reduce){ .turno,.tarjeta-dato,.medidor span{transition:none!important;animation:none!important;} }
 
   /* ── modal y aviso ────────────────────────── */
   dialog{
@@ -259,7 +349,7 @@
     .cabecera h1{font-size:22px;}
     .accion{bottom:8px;padding:10px;}
     .accion .sep{display:none;}
-    .dato .cifra{font-size:22px;}
+    .tarjeta-dato .cifra{font-size:23px;}
   }
 </style>
 </head>
@@ -423,7 +513,6 @@
   <section id="v-confirmados" role="tabpanel" aria-labelledby="tab-confirmados" hidden>
     <div class="filtros">
       <input id="c-q" class="buscar" type="search" placeholder="Buscar nombre o mail" aria-label="Buscar confirmado">
-      <select id="c-sede" aria-label="Sede"></select>
       <label class="chip-check"><input type="checkbox" id="c-pasados"> Ver días anteriores</label>
       <button type="button" class="btn" id="c-recargar">↻ Actualizar</button>
       <button type="button" class="btn primario" id="c-recopilar" title="Lee los mails 'Confirmo' de tu casilla y los suma a la hoja Confirmados">📋 Recopilar de mi casilla</button>
@@ -431,6 +520,7 @@
     </div>
     <p class="estado-linea" id="c-leido"></p>
     <div class="resumen" id="c-resumen"></div>
+    <nav class="salas" id="c-salas" aria-label="Elegir sala"></nav>
     <div id="c-contenido"><p class="cargando">Cargando…</p></div>
   </section>
 
@@ -510,7 +600,8 @@ function fechaDe(texto){
 }
 function hoyCero(){ const h = new Date(); return new Date(h.getFullYear(), h.getMonth(), h.getDate()); }
 function rotularDia(fecha){
-  const dif = Math.round((fecha - hoyCero()) / 86400000);
+  const dia = new Date(fecha.getFullYear(), fecha.getMonth(), fecha.getDate());   // sin la hora
+  const dif = Math.round((dia - hoyCero()) / 86400000);
   const largo = `${DIAS[fecha.getDay()]} ${fecha.getDate()} de ${MESES[fecha.getMonth()]}`;
   if (dif === 0) return `Hoy · ${largo}`;
   if (dif === 1) return `Mañana · ${largo}`;
@@ -1418,100 +1509,176 @@ $('#h-ver').addEventListener('click', async () => {
 /* ════════════════════════════════════════
    CONFIRMADOS
    ════════════════════════════════════════ */
+// Escala y fotos del panel Clippy (los mismos tramos y el mismo cupo de 40 por sala)
+const IMG_CLIPPY = 'https://kevingimenez9705-sketch.github.io/clippy/img/';
+const CUPOS = { 'Florida': 40, 'Adrogué': 40, 'Merlo': 40 };
+const CUPO_DEFAULT = 40;
+const VENTANA_HS = 72;
+const ESCALA = [
+  { hasta:0.45,     clase:'t-frio',  emoji:'🦗', texto:'paspando moscas',    color:'var(--frio)',  foto:IMG_CLIPPY + 'Paspando%20moscas.jpg' },
+  { hasta:0.66,     clase:'t-tibio', emoji:'🐢', texto:'calentando motores', color:'var(--tibio)', foto:IMG_CLIPPY + 'Apenas%20movido.jpg' },
+  { hasta:0.91,     clase:'t-vivo',  emoji:'🔥', texto:'A full',             color:'var(--vivo)',  foto:IMG_CLIPPY + 'Sala%20viva.jpg' },
+  { hasta:Infinity, clase:'t-lleno', emoji:'🚨', texto:'explotado',          color:'var(--lleno)', foto:IMG_CLIPPY + 'Explotado.jpg' }
+];
+const tramoDe = (r) => ESCALA.find(t => r < t.hasta) || ESCALA[ESCALA.length - 1];
+const MS_HORA = 3600000;
+
 async function cargarConfirmados(){
   $('#c-contenido').innerHTML = `<p class="cargando">Leyendo "Confirmados"…</p>`;
   try{
     S.conf = await servidor('appConfirmados');
-    const sedes = [...new Set(S.conf.sedes.concat(S.conf.filas.map(r => r.s)))];
-    const sel = $('#c-sede');
-    sel.innerHTML = `<option value="">Todas las sedes</option>` + sedes.map(s => `<option value="${esc(s)}">${esc(s)}</option>`).join('');
-    sel.value = sedes.includes(S.cf.sede) ? S.cf.sede : '';
+    pintarSalas();
     pintarConfirmados();
   }catch(e){
     $('#c-contenido').innerHTML = `<div class="vacio"><b>No se pudo leer Confirmados</b>${esc(mensajeDe(e))}</div>`;
   }
 }
 
+function pintarSalas(){
+  const sedes = [...new Set(S.conf.sedes.concat(S.conf.filas.map(r => r.s)))];
+  if (!sedes.includes(S.cf.sede)) S.cf.sede = '';
+  const ops = [{ v:'', t:'Todas las salas' }].concat(sedes.map(s => ({ v:s, t: s === 'S/D' ? 'Sin sede' : s })));
+  $('#c-salas').innerHTML = ops.map(o =>
+    `<button type="button" class="sala-chip" data-sala="${esc(o.v)}" aria-pressed="${S.cf.sede === o.v}">${esc(o.t)}</button>`).join('');
+}
+
 function pintarConfirmados(){
-  const hoy = hoyCero();
+  const ahora = new Date();
   const q = norm(S.cf.q);
   const filas = S.conf.filas
-    .map(r => ({ ...r, d: fechaDe(r.fe) }))
     .filter(r => (!S.cf.sede || r.s === S.cf.sede) && (!q || norm(`${r.n} ${r.e}`).includes(q)));
 
-  const proximas = filas.filter(r => r.d && r.d >= hoy);
-  const sinFecha = filas.filter(r => !r.d);
-  const mostrar = (S.cf.pasados || q) ? filas : proximas.concat(sinFecha);
+  // Turnos: fecha + hora + sede. Una persona ocupa un solo lugar por turno (como Clippy)
+  const mapa = new Map();
+  const sinFecha = [];
+  for (const r of filas){
+    const d = fechaDe(r.fe);
+    const h = String(r.h).match(/^(\d{1,2}):(\d{2})$/);
+    if (!d || !h){ sinFecha.push(r); continue; }
+    const fecha = new Date(d.getFullYear(), d.getMonth(), d.getDate(), +h[1], +h[2]);
+    const clave = `${fecha.getTime()}|${r.s}`;
+    if (!mapa.has(clave)) mapa.set(clave, { fecha, sede:r.s, filas:[] });
+    mapa.get(clave).filas.push(r);
+  }
+  const turnos = [...mapa.values()].map(t => {
+    const confirmados = new Set(t.filas.map(r => r.e.toLowerCase())).size;
+    const cupo = CUPOS[t.sede] || CUPO_DEFAULT;
+    const ratio = confirmados / cupo;
+    return { ...t, confirmados, cupo, ratio, tramo: tramoDe(ratio) };
+  }).sort((a, b) => a.fecha - b.fecha || a.sede.localeCompare(b.sede));
 
-  // Una persona ocupa un solo lugar por turno (como el panel Clippy)
-  const unicas = (lista) => new Set(lista.map(r => `${r.e.toLowerCase()}|${r.fe}|${r.h}`)).size;
-  const dupl = filas.length - unicas(filas);
+  const vigentes = turnos.filter(t => t.fecha >= new Date(ahora - MS_HORA));
+  const enVentana = vigentes.filter(t => (t.fecha - ahora) / MS_HORA <= VENTANA_HS);
+  const proximo = vigentes[0] || null;
+  const dupl = filas.length - turnos.reduce((a, t) => a + t.confirmados, 0) - sinFecha.length;
 
-  const porSede = {};
-  proximas.forEach(r => { (porSede[r.s] = porSede[r.s] || []).push(r); });
-  Object.keys(porSede).forEach(s => { porSede[s] = unicas(porSede[s]); });
-  const datos = [{ cifra:unicas(proximas), titulo:'Próximos confirmados', sub:'Desde hoy en adelante' }]
-    .concat(Object.keys(porSede).sort().map(s => ({ cifra:porSede[s], titulo:s, sub:'Confirmados desde hoy' })));
-  if (sinFecha.length) datos.push({ cifra:sinFecha.length, titulo:'Sin fecha u hora', sub:'El mail no la traía: revisar', clase:'alerta' });
-  if (dupl) datos.push({ cifra:dupl, titulo:'Repetidos', sub:'Confirmaron dos veces el mismo turno', clase:'alerta' });
-
+  // ── tarjetas de resumen (las de Clippy)
+  const datos = [];
+  if (proximo) datos.push({ cifra:`${pad(proximo.fecha.getHours())}:${pad(proximo.fecha.getMinutes())}`, titulo:'Próximo turno',
+    sub:`${rotularDia(proximo.fecha).split(' · ')[0]} · ${proximo.sede} · ${proximo.confirmados} ${proximo.tramo.emoji}`, clase:'proximo' });
+  datos.push({ cifra:fmt(enVentana.reduce((a, t) => a + t.confirmados, 0)), titulo:'Confirmados', sub:`En las próximas ${VENTANA_HS}hs` });
+  datos.push({ cifra:fmt(enVentana.length), titulo:'Turnos activos', sub:'Con gente citada' });
+  const llenos = vigentes.filter(t => t.tramo.clase === 't-lleno');
+  const frios = vigentes.filter(t => t.tramo.clase === 't-frio' && (t.fecha - ahora) / MS_HORA <= 48);
+  if (llenos.length) datos.push({ cifra:fmt(llenos.length), titulo:'Turnos explotados', sub:'Sumar selector o frenar citaciones', clase:'alerta' });
+  if (frios.length) datos.push({ cifra:fmt(frios.length), titulo:'Salas vacías', sub:'Hay margen para citar más', clase:'margen' });
+  if (sinFecha.length) datos.push({ cifra:fmt(sinFecha.length), titulo:'Sin fecha u hora', sub:'El mail no la traía: revisar abajo', clase:'alerta' });
+  if (dupl > 0) datos.push({ cifra:fmt(dupl), titulo:'Repetidos', sub:'Confirmaron dos veces el mismo turno', clase:'alerta' });
   $('#c-resumen').innerHTML = datos.map(d => `
-    <div class="dato ${d.clase || ''}"><div class="cifra">${fmt(d.cifra)}</div>
-      <p class="titulo">${esc(d.titulo)}</p><p class="sub">${esc(d.sub)}</p></div>`).join('');
+    <div class="tarjeta-dato ${d.clase || ''}">
+      <div class="cifra">${esc(d.cifra)}</div>
+      <div><p class="titulo">${esc(d.titulo)}</p><p class="sub">${esc(d.sub)}</p></div>
+    </div>`).join('');
   $('#c-leido').textContent = `Hoja "Confirmados" · ${plural(S.conf.filas.length, 'fila', 'filas')} · leída a las ${S.conf.leido}. Recopilar lee la casilla ${S.conf.casilla}.`;
 
-  if (!mostrar.length){
-    $('#c-contenido').innerHTML = `<div class="vacio"><b>No hay confirmados ${q ? 'que coincidan' : 'para los próximos días'}</b>
-      ${S.cf.pasados || q ? '' : 'Marcá "Ver días anteriores" para ver el historial.'}</div>`;
-    return;
+  // ── turnos agrupados por día (y por sala si se ven todas), como Clippy
+  let lista = (S.cf.pasados || q) ? turnos : vigentes;
+  const separar = !S.cf.sede;
+  const ordenSala = (s) => { const i = S.conf.sedes.indexOf(s); return i < 0 ? 99 : i; };
+  const dia = (t) => new Date(t.fecha.getFullYear(), t.fecha.getMonth(), t.fecha.getDate()).getTime();
+  if (separar) lista = [...lista].sort((a, b) => dia(a) - dia(b) || ordenSala(a.sede) - ordenSala(b.sede) || a.fecha - b.fecha);
+
+  const grupos = new Map();
+  for (const t of lista){
+    const rot = rotularDia(t.fecha) + (separar ? ` · ${t.sede}` : '');
+    if (!grupos.has(rot)) grupos.set(rot, []);
+    grupos.get(rot).push(t);
   }
 
-  // día → turno (hora + sede)
-  const dias = new Map();
-  mostrar
-    .slice()
-    .sort((a, b) => (a.d && b.d ? a.d - b.d : a.d ? -1 : b.d ? 1 : 0) || a.h.localeCompare(b.h) || a.s.localeCompare(b.s))
-    .forEach(r => {
-      const clave = r.d ? r.d.getTime() : 'sd';
-      if (!dias.has(clave)) dias.set(clave, { fecha:r.d, turnos:new Map() });
-      const turnos = dias.get(clave).turnos;
-      const t = `${r.h}|${r.s}`;
-      if (!turnos.has(t)) turnos.set(t, []);
-      turnos.get(t).push(r);
-    });
-
   let html = '';
-  for (const { fecha, turnos } of dias.values()){
-    const total = [...turnos.values()].reduce((a, l) => a + unicas(l), 0);
-    html += `<h2 class="dia">${fecha ? esc(rotularDia(fecha)) : 'Sin fecha (revisar)'}
-      <small>${plural(total, 'confirmado', 'confirmados')} en ${plural(turnos.size, 'turno', 'turnos')}</small></h2><div class="slots">`;
-    for (const lista of turnos.values()){
-      const r0 = lista[0];
+  if (!lista.length){
+    html += `<div class="vacio"><b>${q ? 'No hay confirmados que coincidan' : 'Todavía no hay turnos con confirmados'}</b>
+      ${S.cf.pasados || q ? '' : 'Cuando se confirmen postulantes para una fecha futura van a aparecer acá. Marcá "Ver días anteriores" para ver el historial.'}</div>`;
+  }
+  for (const [rot, ts] of grupos){
+    const total = ts.reduce((a, t) => a + t.confirmados, 0);
+    html += `<h2 class="titulo-seccion">${esc(rot)}
+      <span class="cuando">${plural(total, 'confirmado', 'confirmados')} en ${plural(ts.length, 'turno', 'turnos')}</span></h2><div class="grilla">`;
+    for (const t of ts){
       const vistos = {};
-      const items = lista.map(r => {
+      const items = t.filas.map(r => {
         const k = r.e.toLowerCase();
         const dup = vistos[k];
         vistos[k] = true;
         return `<li>${esc(r.n || r.e)}${dup ? ' <span class="dup">(repetido)</span>' : ''}
           <small>${esc(r.e)}${r.c ? ' · citó ' + esc(r.c) : ''}${r.r ? ' · ' + esc(r.r) : ''}</small></li>`;
       }).join('');
-      html += `<article class="slot">
-        <div class="cab"><span class="hora">${r0.h === 'S/D' ? 'Sin hora' : esc(r0.h)}</span><span class="sede">${esc(r0.s)}</span>
-          <span class="cant">${fmt(unicas(lista))} <small>${unicas(lista) === 1 ? 'persona' : 'personas'}</small></span></div>
+      const pct = Math.round(t.ratio * 100);
+      html += `<article class="turno ${t.tramo.clase}${t.fecha < ahora ? ' pasado' : ''}">
+        <div class="foto"><img src="${esc(t.tramo.foto)}" alt="${esc(t.tramo.texto)}" loading="lazy"
+          onerror="this.closest('.foto').classList.add('sin-foto')"><span class="emoji">${t.tramo.emoji}</span></div>
+        <p class="hora">${pad(t.fecha.getHours())}:${pad(t.fecha.getMinutes())}</p>
+        <p class="fecha">${pad(t.fecha.getDate())}/${pad(t.fecha.getMonth() + 1)} · ${esc(t.sede === 'S/D' ? 'Sin sede' : t.sede)}</p>
+        <p class="personas"><b>${t.confirmados}</b> ${t.confirmados === 1 ? 'confirmado' : 'confirmados'}</p>
+        <p class="apodo">${t.tramo.emoji} ${esc(t.tramo.texto)}</p>
+        <div class="medidor"><span data-ancho="${Math.min(100, pct)}"></span></div>
+        <p class="ocupacion">${pct}% de la sala</p>
         <details ${q ? 'open' : ''}><summary>Ver nombres</summary><ol>${items}</ol></details>
       </article>`;
     }
     html += '</div>';
   }
+
+  if (!S.cf.pasados && !q){
+    const lejanos = turnos.filter(t => (t.fecha - ahora) / MS_HORA > VENTANA_HS);
+    if (lejanos.length) html += `<p class="pie">Más adelante (después de ${VENTANA_HS}hs): ${plural(lejanos.reduce((a, t) => a + t.confirmados, 0), 'confirmado', 'confirmados')} en ${plural(lejanos.length, 'turno', 'turnos')}.</p>`;
+  }
+
+  if (sinFecha.length){
+    html += `<h2 class="titulo-seccion">Sin fecha u hora (revisar)
+      <span class="cuando">${plural(sinFecha.length, 'confirmación', 'confirmaciones')} sin turno claro</span></h2>
+      <details class="sin-fecha-lista" ${q ? 'open' : ''}><summary>Ver ${plural(sinFecha.length, 'persona', 'personas')}</summary>
+      <div class="tabla-caja"><table><thead><tr><th>Postulante</th><th>Sede</th><th>Fecha</th><th>Hora</th><th>Citó</th><th>Recibido</th></tr></thead><tbody>
+      ${sinFecha.map(r => `<tr><td><span class="nombre">${esc(r.n || 'Sin nombre')}</span><small>${esc(r.e)}</small></td>
+        <td>${esc(r.s === 'S/D' ? 'Sin sede' : r.s)}</td><td>${esc(r.fe)}</td><td>${esc(r.h)}</td><td>${esc(r.c)}</td><td>${esc(r.r)}</td></tr>`).join('')}
+      </tbody></table></div></details>`;
+  }
+
+  html += `<div class="referencia">${ESCALA.map((t, i) => {
+    const desde = i ? Math.round(ESCALA[i - 1].hasta * 100) : 0;
+    const rango = t.hasta === Infinity ? `más de ${desde}%` : (i ? `${desde}–${Math.round(t.hasta * 100)}%` : `menos de ${Math.round(t.hasta * 100)}%`);
+    return `<span><i class="punto" style="background:${t.color}"></i>${t.emoji} ${esc(t.texto)} · ${rango}</span>`;
+  }).join('')}<span>Cupo: ${CUPO_DEFAULT} por sala</span></div>`;
+
   $('#c-contenido').innerHTML = html;
+  requestAnimationFrame(() => {
+    document.querySelectorAll('#c-contenido .medidor span').forEach(el => { el.style.width = el.dataset.ancho + '%'; });
+  });
 }
+
+$('#c-salas').addEventListener('click', (e) => {
+  const chip = e.target.closest('.sala-chip');
+  if (!chip) return;
+  S.cf.sede = chip.dataset.sala;
+  pintarSalas();
+  pintarConfirmados();
+});
 
 let cBuscarT = null;
 $('#c-q').addEventListener('input', (e) => {
   clearTimeout(cBuscarT);
   cBuscarT = setTimeout(() => { S.cf.q = e.target.value; if (S.conf) pintarConfirmados(); }, 160);
 });
-$('#c-sede').addEventListener('change', (e) => { S.cf.sede = e.target.value; pintarConfirmados(); });
 $('#c-pasados').addEventListener('change', (e) => { S.cf.pasados = e.target.checked; pintarConfirmados(); });
 $('#c-recargar').addEventListener('click', cargarConfirmados);
 
