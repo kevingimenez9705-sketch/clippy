@@ -52,7 +52,7 @@ function appPagina_() {
 
 // El tablero en una ventana dentro de la planilla, sin implementar nada
 function abrirTablero() {
-  const html = HtmlService.createHtmlOutputFromFile('App').setWidth(1280).setHeight(820);
+  const html = HtmlService.createHtmlOutputFromFile('App').setWidth(1200).setHeight(680);
   SpreadsheetApp.getUi().showModelessDialog(html, 'Tablero de citaciones');
 }
 
