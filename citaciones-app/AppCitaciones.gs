@@ -33,6 +33,9 @@ const APP_ATS = {
   HOJA: 'ATS - Postulaciones'
 };
 
+// Se ve en la bandeja ("leída a las … · versión"): sirve para saber qué versión está publicada
+const APP_VERSION = '12-11b';
+
 // Normalmente vacío: el tablero usa la planilla del proyecto. Solo si dice
 // "No encuentro la planilla", pegar acá el link de Citaciones Tortus.
 const APP_PLANILLA = '';
@@ -172,7 +175,7 @@ function appListar(pestana) {
     pestana: hoja.getName(),
     filas: appLeerBandeja_(hoja),
     cupo: MailApp.getRemainingDailyQuota(),
-    leido: Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'HH:mm')
+    leido: Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'HH:mm') + ' · versión ' + APP_VERSION
   };
 }
 
@@ -345,10 +348,13 @@ function appAsignar(pestana, pedidas, fecha, hora) {
         fechas.clearContent();
         horas.clearContent();
       } else {
-        appFormato_(fechas, 'dd/mm/yyyy');
         appEscribirFecha_(fechas, fecha, hoja.getParent().getSpreadsheetTimeZone());
-        appFormato_(horas, '@');
-        horas.setValue(appTexto_(horaFinal));
+        try {
+          horas.setValue(appTexto_(horaFinal));
+          SpreadsheetApp.flush();
+        } catch (error) {
+          throw new Error('No se pudo escribir la hora (versión ' + APP_VERSION + '): ' + error.message);
+        }
       }
 
       SpreadsheetApp.flush();
@@ -371,16 +377,10 @@ function appFechaHora_(fecha, hora, mensaje) {
   return { fecha: fecha, hora: horaFinal };
 }
 
-// Si la pestaña es una "tabla" de Sheets, sus columnas tienen tipo (fecha, texto…)
-// y Google no deja cambiarles el formato ("No puedes configurar el formato de número
-// de las celdas de una columna con texto"). Ahí no hace falta: la columna ya tiene el suyo.
-function appFormato_(rango, formato) {
-  try {
-    rango.setNumberFormat(formato);
-  } catch (error) {
-    console.warn('Formato no aplicado (columna con tipo): ' + error.message);
-  }
-}
+// No se cambia el formato de ninguna celda: en las pestañas que son "tablas" de
+// Sheets las columnas tienen tipo y Google rechaza el cambio ("No puedes configurar
+// el formato de número de las celdas de una columna con texto"), y el error recién
+// aparece en la escritura siguiente. Se escriben solo valores.
 
 // Texto puro: el apóstrofo evita que Sheets lo convierta en hora o fecha (y le quiera
 // cambiar el formato a una columna de texto). No se ve en la celda: se lee "09:30".
@@ -393,9 +393,15 @@ function appTexto_(valor) {
 function appEscribirFecha_(rangos, fecha, tz) {
   try {
     rangos.setValue(Utilities.parseDate(fecha, tz, 'yyyy-MM-dd'));
+    SpreadsheetApp.flush();
   } catch (error) {
     console.warn('Fecha como texto (columna con tipo): ' + error.message);
-    rangos.setValue(appTexto_(fecha.split('-').reverse().join('/')));
+    try {
+      rangos.setValue(appTexto_(fecha.split('-').reverse().join('/')));
+      SpreadsheetApp.flush();
+    } catch (otro) {
+      throw new Error('No se pudo escribir la fecha (versión ' + APP_VERSION + '): ' + otro.message);
+    }
   }
 }
 
@@ -868,7 +874,6 @@ function appAgregarFilas_(pestana, personas, fecha, hora) {
       }
 
       // La hora va como texto ("09:30") y la fecha como fecha, igual que al asignar
-      appFormato_(hoja.getRange(primera, cd.hora + 1, nuevas.length, 1), '@');
       try {
         hoja.getRange(primera, 1, nuevas.length, ancho).setValues(nuevas);
       } catch (error) {
@@ -877,9 +882,6 @@ function appAgregarFilas_(pestana, personas, fecha, hora) {
         const textoFecha = appTexto_(fh.fecha.split('-').reverse().join('/'));
         nuevas.forEach(fila => { fila[cd.fecha] = textoFecha; });
         hoja.getRange(primera, 1, nuevas.length, ancho).setValues(nuevas);
-      }
-      if (fh) {
-        appFormato_(hoja.getRange(primera, cd.fecha + 1, nuevas.length, 1), 'dd/mm/yyyy');
       }
       SpreadsheetApp.flush();
     }
