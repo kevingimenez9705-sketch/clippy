@@ -345,9 +345,9 @@ function appAsignar(pestana, pedidas, fecha, hora) {
         fechas.clearContent();
         horas.clearContent();
       } else {
-        fechas.setNumberFormat('dd/mm/yyyy');
+        appFormato_(fechas, 'dd/mm/yyyy');
         fechas.setValue(Utilities.parseDate(fecha, hoja.getParent().getSpreadsheetTimeZone(), 'yyyy-MM-dd'));
-        horas.setNumberFormat('@');
+        appFormato_(horas, '@');
         horas.setValue(horaFinal);
       }
 
@@ -369,6 +369,17 @@ function appFechaHora_(fecha, hora, mensaje) {
   const horaFinal = m ? armarHora_(m[1], m[2]) : CONFIG.SIN_DATO;
   if (horaFinal === CONFIG.SIN_DATO) throw new Error(mensaje);
   return { fecha: fecha, hora: horaFinal };
+}
+
+// Si la pestaña es una "tabla" de Sheets, sus columnas tienen tipo (fecha, texto…)
+// y Google no deja cambiarles el formato ("No puedes configurar el formato de número
+// de las celdas de una columna con texto"). Ahí no hace falta: la columna ya tiene el suyo.
+function appFormato_(rango, formato) {
+  try {
+    rango.setNumberFormat(formato);
+  } catch (error) {
+    console.warn('Formato no aplicado (columna con tipo): ' + error.message);
+  }
 }
 
 function appBloquear_() {
@@ -840,10 +851,10 @@ function appAgregarFilas_(pestana, personas, fecha, hora) {
       }
 
       // La hora va como texto ("09:30") y la fecha como fecha, igual que al asignar
-      hoja.getRange(primera, cd.hora + 1, nuevas.length, 1).setNumberFormat('@');
+      appFormato_(hoja.getRange(primera, cd.hora + 1, nuevas.length, 1), '@');
       hoja.getRange(primera, 1, nuevas.length, ancho).setValues(nuevas);
       if (fh) {
-        hoja.getRange(primera, cd.fecha + 1, nuevas.length, 1).setNumberFormat('dd/mm/yyyy');
+        appFormato_(hoja.getRange(primera, cd.fecha + 1, nuevas.length, 1), 'dd/mm/yyyy');
       }
       SpreadsheetApp.flush();
     }
