@@ -6,6 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Space+Grotesk:wght@600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
 <style>
   :root{
@@ -356,23 +357,156 @@
     .accion .sep{display:none;}
     .tarjeta-dato .cifra{font-size:23px;}
   }
+
+  /* ══════════════════════════════════════════════
+     TEMA · estilo El Dojo en azul
+     ══════════════════════════════════════════════ */
+  :root{
+    --fondo:#eef3fb;
+    --primario:#1d4ed8;
+    --primario-2:#1e3a8a;
+    --primario-line:#c7d7fe;
+    --borde:#d6e0f2;
+    --hero:linear-gradient(115deg,#0b1a3f 0%,#16295c 42%,#1d4ed8 100%);
+    --sombra-card:0 10px 30px rgba(15,35,90,.07);
+  }
+  body{
+    background:
+      radial-gradient(900px 380px at 88% -140px,rgba(34,211,238,.22),transparent 62%),
+      radial-gradient(820px 400px at -8% -160px,rgba(29,78,216,.18),transparent 62%),
+      var(--fondo);
+    background-attachment:fixed;
+    min-height:100vh;
+  }
+  .marco{padding-top:6px;}
+
+  /* barra superior */
+  .topnav{
+    position:sticky;top:0;z-index:30;
+    background:var(--hero);color:#fff;
+    padding:12px 28px;min-height:66px;
+    display:flex;align-items:center;justify-content:space-between;gap:10px 20px;flex-wrap:wrap;
+    box-shadow:0 12px 30px -14px rgba(11,26,63,.65);
+  }
+  .topnav-logo{display:flex;align-items:center;gap:12px;}
+  .logo-equipo{width:42px;height:42px;border-radius:50%;background:#1d4ed8;object-fit:contain;box-shadow:0 0 0 2px rgba(255,255,255,.28),0 0 18px rgba(34,211,238,.45);}
+  .topnav .rotulo{margin:0;font-size:10.5px;color:#a9c1ee;}
+  .topnav h1{font-family:"Space Grotesk",system-ui,sans-serif;font-size:23px;font-weight:700;margin:0;line-height:1.1;letter-spacing:-.01em;}
+  .topnav h1 span{background:linear-gradient(90deg,var(--cian),#8fb8ff);-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .chip-claro{border-radius:10px;padding:6px 12px;font-weight:600;background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.22);}
+
+  /* pestañas */
+  .nav{border-bottom:0;gap:8px;margin:18px 0 16px;flex-wrap:wrap;}
+  .nav button{
+    display:inline-flex;align-items:center;gap:8px;min-height:44px;margin:0;
+    padding:9px 18px;border-radius:12px;background:#fff;border:1px solid var(--primario-line);
+    color:#334155;font-weight:700;box-shadow:var(--sombra-card);transition:all .15s ease;
+  }
+  .nav button i{font-size:13px;color:var(--primario);}
+  .nav button:hover{border-color:var(--primario);color:var(--primario);}
+  .nav button[aria-selected="true"]{background:var(--primario);border-color:var(--primario);color:#fff;box-shadow:0 12px 24px -10px rgba(29,78,216,.7);}
+  .nav button[aria-selected="true"] i{color:#fff;}
+
+  /* filtros y campos */
+  select,input[type="search"],input[type="date"],input[type="time"]{border-color:var(--borde);border-radius:10px;min-height:40px;background:#fff;}
+  select:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid rgba(29,78,216,.25);outline-offset:1px;border-color:var(--primario);}
+  .pestana-sel{color:var(--primario-2);font-weight:700;border-color:var(--primario-line);}
+
+  /* botones */
+  button.btn{border-radius:12px;min-height:40px;font-weight:700;border-color:var(--borde);display:inline-flex;align-items:center;gap:7px;justify-content:center;}
+  button.btn:hover:not(:disabled){border-color:var(--primario);color:var(--primario);background:#f6f9ff;}
+  button.btn.primario{background:var(--primario);border-color:var(--primario);color:#fff;box-shadow:0 8px 20px -6px rgba(29,78,216,.55);}
+  button.btn.primario:hover:not(:disabled){background:var(--primario-2);border-color:var(--primario-2);color:#fff;}
+  button.btn.peligro{color:#be123c;border-color:#fecdd3;background:#fff;}
+  button.btn.peligro:hover:not(:disabled){background:#e11d48;border-color:#e11d48;color:#fff;}
+
+  /* estados como indicadores (filtran) */
+  .estados{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:10px;margin-bottom:14px;}
+  .estado-chip{
+    --c:var(--primario);
+    position:relative;overflow:hidden;
+    display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:3px;
+    min-height:76px;padding:12px 14px 12px 19px;border-radius:14px;text-align:left;
+    background:color-mix(in srgb,var(--c) 8%,#fff);
+    border:1px solid color-mix(in srgb,var(--c) 28%,#fff);
+    color:#334155;transition:transform .15s ease,box-shadow .15s ease;
+  }
+  .estado-chip::before{content:'';position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--c);}
+  .estado-chip b{font-family:"Space Grotesk",system-ui,sans-serif;font-size:26px;font-weight:700;line-height:1;color:var(--c);}
+  .estado-chip .etq{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#475569;}
+  .estado-chip:hover{transform:translateY(-2px);box-shadow:0 12px 24px -16px var(--c);}
+  .estado-chip[aria-pressed="true"]{background:#fff;color:#334155;border-color:var(--c);box-shadow:0 0 0 2px var(--c),0 14px 28px -14px var(--c);}
+
+  /* selección rápida y barra de arriba de Agregar */
+  .seleccion-rapida,.arriba{background:#fff;border:1px solid var(--borde);border-radius:14px;padding:10px 14px;box-shadow:var(--sombra-card);}
+  .seleccion-rapida label{color:var(--primario-2);}
+
+  /* tabla */
+  .tabla-caja{background:#fff;border:1px solid var(--borde);border-radius:18px;box-shadow:var(--sombra-card);}
+  th{background:#f1f5fd;color:#475569;font-weight:700;}
+  tbody tr:hover{background:#f6f9ff;}
+  tbody tr.sel{background:#e8efff;box-shadow:inset 4px 0 0 var(--primario);}
+  .c-check input{accent-color:var(--primario);}
+
+  /* etiquetas de estado (como las del Dojo) */
+  .badge{text-transform:uppercase;letter-spacing:.04em;font-size:10.5px;font-weight:800;padding:3px 9px;}
+  .b-listo{background:#dbe7ff;color:#1d4ed8;}
+  .b-ok{background:#dcfce7;color:#15803d;}
+  .b-error{background:#ffe4e6;color:#be123c;}
+  .b-ambar{background:#fef3c7;color:#92400e;}
+  .b-gris{background:#e2e8f0;color:#475569;}
+
+  /* modos de Agregar */
+  .modos{border-color:var(--primario-line);border-radius:12px;background:#fff;box-shadow:var(--sombra-card);}
+  .modos button{display:inline-flex;align-items:center;gap:7px;padding:9px 16px;font-weight:700;}
+  .modos button i{color:var(--primario);}
+  .modos button[aria-pressed="true"]{background:var(--primario);color:#fff;}
+  .modos button[aria-pressed="true"] i{color:#fff;}
+  .form-mano{background:#fff;border:1px solid var(--borde);border-radius:18px;padding:18px;box-shadow:var(--sombra-card);}
+
+  /* barra de selección */
+  .accion{background:var(--hero);border-radius:16px;box-shadow:0 18px 44px -14px rgba(29,78,216,.65);}
+  .accion .btn.primario{background:#fff;color:var(--primario-2);border-color:#fff;box-shadow:none;}
+  .accion .btn.citar{background:var(--cian);border-color:var(--cian);color:#0b1a3f;}
+  .accion .btn:hover:not(:disabled){background:rgba(255,255,255,.16);color:#fff;border-color:#fff;}
+  .accion .btn.primario:hover:not(:disabled){background:#eaf1ff;color:var(--primario-2);}
+
+  /* confirmados: tarjetas blancas sobre el fondo celeste */
+  .tarjeta-dato{background:#fff;box-shadow:var(--sombra-card);border-color:var(--borde);}
+  .tarjeta-dato.alerta{background:#fff5f4;}
+  .tarjeta-dato.margen{background:#f2f7ff;}
+  .sala-chip{background:#fff;border-color:var(--primario-line);}
+  .sala-chip[aria-pressed="true"]{background:var(--primario);border-color:var(--primario);}
+  .vacio{background:#fff;border:1px solid var(--borde);border-radius:14px;}
+
+  dialog{border-radius:18px;}
+  .modal h2{color:var(--primario-2);}
+
+  @media (max-width:640px){
+    .topnav{padding:10px 16px;position:static;}
+    .topnav h1{font-size:20px;}
+    .estados{grid-template-columns:repeat(2,minmax(0,1fr));}
+  }
 </style>
 </head>
 <body>
-<div class="marco">
-
-  <header class="cabecera">
+<header class="topnav">
+  <div class="topnav-logo">
+    <img class="logo-equipo" src="https://kevingimenez9705-sketch.github.io/Portal-de-selecci-n-2.0/assets/logo-gastro.png" alt="Gastro Buenos Aires" onerror="this.remove()">
     <div>
       <p class="rotulo">Selección Operativa</p>
       <h1>Citaciones <span>Tortus</span></h1>
     </div>
-    <div class="quien" id="quien"></div>
-  </header>
+  </div>
+  <div class="quien" id="quien"></div>
+</header>
+
+<div class="marco">
 
   <nav class="nav" role="tablist" aria-label="Secciones">
-    <button type="button" role="tab" id="tab-bandeja" aria-controls="v-bandeja" aria-selected="true" data-vista="bandeja">Bandeja</button>
-    <button type="button" role="tab" id="tab-ats" aria-controls="v-ats" aria-selected="false" data-vista="ats">＋ Agregar postulantes</button>
-    <button type="button" role="tab" id="tab-confirmados" aria-controls="v-confirmados" aria-selected="false" data-vista="confirmados">Confirmados</button>
+    <button type="button" role="tab" id="tab-bandeja" aria-controls="v-bandeja" aria-selected="true" data-vista="bandeja"><i class="fas fa-inbox" aria-hidden="true"></i> Bandeja</button>
+    <button type="button" role="tab" id="tab-ats" aria-controls="v-ats" aria-selected="false" data-vista="ats"><i class="fas fa-user-plus" aria-hidden="true"></i> Agregar postulantes</button>
+    <button type="button" role="tab" id="tab-confirmados" aria-controls="v-confirmados" aria-selected="false" data-vista="confirmados"><i class="fas fa-circle-check" aria-hidden="true"></i> Confirmados</button>
   </nav>
 
   <!-- ══ BANDEJA ══════════════════════════════════ -->
@@ -390,7 +524,7 @@
         <option value="nombre">Nombre A–Z</option>
         <option value="entrevista">Fecha de entrevista</option>
       </select>
-      <button type="button" class="btn" id="b-recargar" title="Volver a leer la pestaña">↻ Actualizar</button>
+      <button type="button" class="btn" id="b-recargar" title="Volver a leer la pestaña"><i class="fas fa-rotate" aria-hidden="true"></i> Actualizar</button>
     </div>
     <p class="estado-linea" id="b-leido"></p>
     <div class="seleccion-rapida">
@@ -438,9 +572,9 @@
       <span class="estado-linea" style="margin:0">Con fecha y hora entran listos para citar.</span>
     </div>
     <div class="modos" role="group" aria-label="Cómo agregar">
-      <button type="button" data-modo="buscar" aria-pressed="true">🔎 Buscar en el ATS</button>
-      <button type="button" data-modo="pegar" aria-pressed="false">📋 Pegar del ATS</button>
-      <button type="button" data-modo="mano" aria-pressed="false">✍️ Cargar a mano</button>
+      <button type="button" data-modo="buscar" aria-pressed="true"><i class="fas fa-magnifying-glass" aria-hidden="true"></i> Buscar en el ATS</button>
+      <button type="button" data-modo="pegar" aria-pressed="false"><i class="fas fa-paste" aria-hidden="true"></i> Pegar del ATS</button>
+      <button type="button" data-modo="mano" aria-pressed="false"><i class="fas fa-pen" aria-hidden="true"></i> Cargar a mano</button>
     </div>
 
     <!-- modo: buscar en el ATS -->
@@ -457,7 +591,7 @@
         <option value="nombre">Nombre A–Z</option>
       </select>
       <label class="chip-check"><input type="checkbox" id="t-todos"> Ver también los que ya están en una pestaña</label>
-      <button type="button" class="btn" id="t-recargar" title="Volver a leer el ATS">↻ Actualizar</button>
+      <button type="button" class="btn" id="t-recargar" title="Volver a leer el ATS"><i class="fas fa-rotate" aria-hidden="true"></i> Actualizar</button>
     </div>
     <p class="estado-linea" id="t-leido"></p>
     <div class="tabla-caja">
@@ -526,9 +660,9 @@
     <div class="filtros">
       <input id="c-q" class="buscar" type="search" placeholder="Buscar nombre o mail" aria-label="Buscar confirmado">
       <label class="chip-check"><input type="checkbox" id="c-pasados"> Ver días anteriores</label>
-      <button type="button" class="btn" id="c-recargar">↻ Actualizar</button>
-      <button type="button" class="btn primario" id="c-recopilar" title="Lee los mails 'Confirmo' de tu casilla y los suma a la hoja Confirmados">📋 Recopilar de mi casilla</button>
-      <button type="button" class="btn" id="c-gmail" title="Etiqueta por sede y archiva las confirmaciones en tu Gmail">📩 Organizar Gmail</button>
+      <button type="button" class="btn" id="c-recargar"><i class="fas fa-rotate" aria-hidden="true"></i> Actualizar</button>
+      <button type="button" class="btn primario" id="c-recopilar" title="Lee los mails 'Confirmo' de tu casilla y los suma a la hoja Confirmados"><i class="fas fa-envelope-open-text" aria-hidden="true"></i> Recopilar de mi casilla</button>
+      <button type="button" class="btn" id="c-gmail" title="Etiqueta por sede y archiva las confirmaciones en tu Gmail"><i class="fas fa-tags" aria-hidden="true"></i> Organizar Gmail</button>
     </div>
     <p class="estado-linea" id="c-leido"></p>
     <div class="resumen" id="c-resumen"></div>
@@ -570,17 +704,17 @@
    CONFIG
    ════════════════════════════════════════ */
 const POR_PAGINA = 100;
-const VERSION_PANTALLA = '12-11d';
+const VERSION_PANTALLA = '12-11e';
 const LOTE_CITAR = 50;          // mails por llamada a citar(): cada llamada tiene 6 min como máximo
 const MIN_RUTA = 35;            // n8n lee la planilla cada 30 min: avisar antes de borrar filas recién enviadas
 
 const ESTADOS = {
-  sinfecha: { txt:'Sin fecha',          clase:'b-gris',  color:'#9aa1ad' },
-  listo:    { txt:'Lista para citar',   clase:'b-listo', color:'#1d5fbf' },
-  enviado:  { txt:'Enviada',            clase:'b-ok',    color:'#1f7a4d' },
-  error:    { txt:'Error al enviar',    clase:'b-error', color:'#b42318' },
-  sinzona:  { txt:'Zona no reconocida', clase:'b-ambar', color:'#c98a12' },
-  sinmail:  { txt:'Sin mail',           clase:'b-ambar', color:'#c98a12' }
+  sinfecha: { txt:'Sin fecha',          clase:'b-gris',  color:'#64748b' },
+  listo:    { txt:'Lista para citar',   clase:'b-listo', color:'#1d4ed8' },
+  enviado:  { txt:'Enviada',            clase:'b-ok',    color:'#16a34a' },
+  error:    { txt:'Error al enviar',    clase:'b-error', color:'#e11d48' },
+  sinzona:  { txt:'Zona no reconocida', clase:'b-ambar', color:'#d97706' },
+  sinmail:  { txt:'Sin mail',           clase:'b-ambar', color:'#d97706' }
 };
 const ORDEN_ESTADOS = ['sinfecha','listo','enviado','error','sinzona','sinmail'];
 
@@ -827,9 +961,10 @@ function pintarBandeja(){
   const chips = [{ st:'', txt:'Todas', n:base.length }]
     .concat(S.sel.size || S.f.st === 'sel' ? [{ st:'sel', txt:'Seleccionadas', n:base.filter(r => S.sel.has(r.f)).length }] : [])
     .concat(ORDEN_ESTADOS.filter(st => cuenta[st] || st === S.f.st).map(st => ({ st, txt:ESTADOS[st].txt, n:cuenta[st] || 0 })));
+  const colorChip = (st) => ESTADOS[st] ? ESTADOS[st].color : (st === 'sel' ? '#0891b2' : '#16295c');
   $('#estados').innerHTML = chips.map(c => `
-    <button type="button" class="estado-chip" data-st="${c.st}" aria-pressed="${S.f.st === c.st}">
-      ${ESTADOS[c.st] ? `<span class="punto" style="background:${ESTADOS[c.st].color}"></span>` : ''}${esc(c.txt)} <b>${fmt(c.n)}</b>
+    <button type="button" class="estado-chip" data-st="${c.st}" aria-pressed="${S.f.st === c.st}" style="--c:${colorChip(c.st)}">
+      <b>${fmt(c.n)}</b> <span class="etq">${esc(c.txt)}</span>
     </button>`).join('');
 
   const lista = filtradas();
@@ -847,7 +982,7 @@ function pintarBandeja(){
   mas.textContent = `Mostrar ${fmt(Math.min(POR_PAGINA, lista.length - S.limite))} más`;
 
   const enviadas = S.filas.filter(r => r.st === 'enviado').length;
-  $('#b-limpiar').textContent = `🗑️ Eliminar filas ENVIADO (${fmt(enviadas)})`;
+  $('#b-limpiar').innerHTML = `<i class="fas fa-trash" aria-hidden="true"></i> Eliminar filas ENVIADO (${fmt(enviadas)})`;
   $('#b-limpiar').disabled = S.ocupado || !enviadas;
 
   $('#b-leido').textContent = `Pestaña "${S.pestana}" · ${plural(S.filas.length, 'fila', 'filas')} · leída a las ${S.leido} · pantalla ${VERSION_PANTALLA}.`;
@@ -895,7 +1030,7 @@ function pintarAccion(){
   const enviadas = sel.filter(r => r.st === 'enviado').length;
   $('#a-n').textContent = plural(n, 'seleccionada', 'seleccionadas');
   const citar = $('#a-citar');
-  citar.textContent = `✉️ Citar ${fmt(citables)}`;
+  citar.innerHTML = `<i class="fas fa-paper-plane" aria-hidden="true"></i> Citar ${fmt(citables)}`;
   if (!S.ocupado) citar.disabled = citables === 0;
   citar.title = 'Se citan solo las filas con mail, fecha, hora y zona reconocida que no estén enviadas';
 
@@ -1389,8 +1524,8 @@ document.querySelector('.modos').addEventListener('click', (e) => {
 function sinAts(mensaje){
   $('#t-filas').innerHTML = `<tr><td colspan="9" class="vacio"><b>No se pudo leer el ATS</b>${esc(mensaje)}
     <div class="fila-botones" style="justify-content:center">
-      <button type="button" class="btn primario" data-ir-modo="pegar">📋 Pegar del ATS</button>
-      <button type="button" class="btn" data-ir-modo="mano">✍️ Cargar a mano</button>
+      <button type="button" class="btn primario" data-ir-modo="pegar"><i class="fas fa-paste" aria-hidden="true"></i> Pegar del ATS</button>
+      <button type="button" class="btn" data-ir-modo="mano"><i class="fas fa-pen" aria-hidden="true"></i> Cargar a mano</button>
     </div></td></tr>`;
 }
 $('#t-filas').addEventListener('click', (e) => {
