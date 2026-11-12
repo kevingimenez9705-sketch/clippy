@@ -398,7 +398,7 @@
       <input type="number" id="b-cant" min="1" step="1" value="100" inputmode="numeric">
       <span>filas de la lista</span>
       <button type="button" class="btn chico" id="b-sel-cant">Seleccionar</button>
-      <span class="tip">Respeta los filtros y el orden elegido, y saltea las ya enviadas. Con <b>Shift + clic</b> elegís un rango.</span>
+      <span class="tip">Con "Todas" toma solo las que <b>todavía no tienen fecha</b>, en el orden elegido. Para citar, tocá antes "Lista para citar". Las enviadas van al final. Con <b>Shift + clic</b> elegís un rango.</span>
     </div>
     <div class="estados" id="estados" role="group" aria-label="Filtrar por estado"></div>
     <div class="tabla-caja">
@@ -570,7 +570,7 @@
    CONFIG
    ════════════════════════════════════════ */
 const POR_PAGINA = 100;
-const VERSION_PANTALLA = '12-11c';
+const VERSION_PANTALLA = '12-11d';
 const LOTE_CITAR = 50;          // mails por llamada a citar(): cada llamada tiene 6 min como máximo
 const MIN_RUTA = 35;            // n8n lee la planilla cada 30 min: avisar antes de borrar filas recién enviadas
 
@@ -815,7 +815,8 @@ function filtradas(conEstado = true){
       return fa - fb || a.h.localeCompare(b.h) || a.f - b.f;
     }
   }[S.f.orden];
-  return lista.sort(orden);
+  // Las enviadas van siempre al final, en cualquier orden
+  return lista.sort((a, b) => (a.st === 'enviado') - (b.st === 'enviado') || orden(a, b));
 }
 
 function pintarBandeja(){
@@ -964,14 +965,18 @@ $('#filas').addEventListener('click', (e) => {
 function seleccionarPrimeras(){
   const n = Math.floor(Number($('#b-cant').value));
   if (!(n > 0)){ toast('Poné cuántas filas querés seleccionar.'); $('#b-cant').focus(); return; }
-  const disponibles = filtradas().filter(r => r.st !== 'enviado');
+  // Con "Todas" toma las que todavía no tienen fecha (así cada lote es nuevo).
+  // Con un estado elegido ("Lista para citar", "Error al enviar"…), las de ese estado.
+  const soloSinFecha = !S.f.st;
+  const disponibles = filtradas().filter(r => soloSinFecha ? r.st === 'sinfecha' : r.st !== 'enviado');
   const elegidas = disponibles.slice(0, n);
+  const que = soloSinFecha ? ' sin fecha' : '';
   S.sel = new Set(elegidas.map(r => r.f));
   S.ultimaFila = null;
   pintarBandeja();
   toast(elegidas.length < n
-    ? `${plural(elegidas.length, 'fila seleccionada', 'filas seleccionadas')}: son todas las que hay sin enviar con estos filtros.`
-    : `${plural(elegidas.length, 'fila seleccionada', 'filas seleccionadas')}.`);
+    ? `${plural(elegidas.length, 'fila' + que + ' seleccionada', 'filas' + que + ' seleccionadas')}: son todas las que hay con estos filtros.`
+    : `${plural(elegidas.length, 'fila' + que + ' seleccionada', 'filas' + que + ' seleccionadas')}.`);
 }
 $('#b-sel-cant').addEventListener('click', seleccionarPrimeras);
 $('#b-cant').addEventListener('keydown', (e) => { if (e.key === 'Enter'){ e.preventDefault(); seleccionarPrimeras(); } });
