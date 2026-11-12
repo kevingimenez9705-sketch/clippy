@@ -346,9 +346,9 @@ function appAsignar(pestana, pedidas, fecha, hora) {
         horas.clearContent();
       } else {
         appFormato_(fechas, 'dd/mm/yyyy');
-        fechas.setValue(Utilities.parseDate(fecha, hoja.getParent().getSpreadsheetTimeZone(), 'yyyy-MM-dd'));
+        appEscribirFecha_(fechas, fecha, hoja.getParent().getSpreadsheetTimeZone());
         appFormato_(horas, '@');
-        horas.setValue(horaFinal);
+        horas.setValue(appTexto_(horaFinal));
       }
 
       SpreadsheetApp.flush();
@@ -379,6 +379,23 @@ function appFormato_(rango, formato) {
     rango.setNumberFormat(formato);
   } catch (error) {
     console.warn('Formato no aplicado (columna con tipo): ' + error.message);
+  }
+}
+
+// Texto puro: el apóstrofo evita que Sheets lo convierta en hora o fecha (y le quiera
+// cambiar el formato a una columna de texto). No se ve en la celda: se lee "09:30".
+function appTexto_(valor) {
+  return "'" + String(valor);
+}
+
+// La fecha va como fecha (ordena y filtra bien). Si la columna es de tipo texto
+// y no la acepta, va como texto "16/11/2026", que el menú y n8n leen igual.
+function appEscribirFecha_(rangos, fecha, tz) {
+  try {
+    rangos.setValue(Utilities.parseDate(fecha, tz, 'yyyy-MM-dd'));
+  } catch (error) {
+    console.warn('Fecha como texto (columna con tipo): ' + error.message);
+    rangos.setValue(appTexto_(fecha.split('-').reverse().join('/')));
   }
 }
 
@@ -836,7 +853,7 @@ function appAgregarFilas_(pestana, personas, fecha, hora) {
       });
       if (fh) {
         fila[cd.fecha] = Utilities.parseDate(fh.fecha, tz, 'yyyy-MM-dd');
-        fila[cd.hora] = fh.hora;
+        fila[cd.hora] = appTexto_(fh.hora);
       }
 
       nuevas.push(fila);
@@ -852,7 +869,15 @@ function appAgregarFilas_(pestana, personas, fecha, hora) {
 
       // La hora va como texto ("09:30") y la fecha como fecha, igual que al asignar
       appFormato_(hoja.getRange(primera, cd.hora + 1, nuevas.length, 1), '@');
-      hoja.getRange(primera, 1, nuevas.length, ancho).setValues(nuevas);
+      try {
+        hoja.getRange(primera, 1, nuevas.length, ancho).setValues(nuevas);
+      } catch (error) {
+        // Columna de fecha de tipo texto: la fecha va como texto "16/11/2026"
+        if (!fh) throw error;
+        const textoFecha = appTexto_(fh.fecha.split('-').reverse().join('/'));
+        nuevas.forEach(fila => { fila[cd.fecha] = textoFecha; });
+        hoja.getRange(primera, 1, nuevas.length, ancho).setValues(nuevas);
+      }
       if (fh) {
         appFormato_(hoja.getRange(primera, cd.fecha + 1, nuevas.length, 1), 'dd/mm/yyyy');
       }
